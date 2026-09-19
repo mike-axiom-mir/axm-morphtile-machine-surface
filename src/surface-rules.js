@@ -9,11 +9,23 @@ const DIRECTIONS = Object.freeze({
   back: Object.freeze({ variable: "nz", sign: -1 })
 });
 
+const FACING_FIELDS = Object.freeze(["kind", "direction", "threshold", "match_color", "else_color"]);
+
 class SurfaceRuleError extends Error {
   constructor(code, message) {
     super(message);
     this.name = "SurfaceRuleError";
     this.code = code;
+  }
+}
+
+function assertOnlyFields(rule, allowed) {
+  const unknown = Object.keys(rule).filter((key) => !allowed.includes(key)).sort();
+  if (unknown.length) {
+    throw new SurfaceRuleError(
+      "HOLD_SURFACE_RULE_FIELD_UNKNOWN",
+      "unknown surface_rule field" + (unknown.length === 1 ? ": " : "s: ") + unknown.join(", ")
+    );
   }
 }
 
@@ -38,6 +50,7 @@ function facingExpression(direction) {
 }
 
 function compileFacing(rule) {
+  assertOnlyFields(rule, FACING_FIELDS);
   const direction = rule.direction;
   const threshold = rule.threshold === undefined ? 0.6 : Number(rule.threshold);
   if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
