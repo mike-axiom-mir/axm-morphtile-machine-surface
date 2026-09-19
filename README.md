@@ -27,4 +27,3 @@ Node 18 or later; zero runtime dependencies; no secrets or network required.
 - HELD: No rendered observer, bridge execution, or claim of visual quality.
 
 This is a foundation, not evidence that MorphTile can autonomously manufacture MorphTile.
-

@@ -16,4 +16,3 @@ Structural and visual evidence are separate; this pass has structural tests and 
 No rendered observer, bridge execution, or claim of visual quality.
 
 No claim of autonomous creation, production readiness, canon, or visual quality is made.
-
