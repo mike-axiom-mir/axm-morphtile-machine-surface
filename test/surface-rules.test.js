@@ -57,6 +57,21 @@ test("surface_rule and raw paint cannot silently compete for authorship", () => 
   assert.equal(out.candidate, null);
 });
 
+test("unknown facing-rule fields HOLD instead of being silently ignored", () => {
+  const typo = requestFor("up");
+  typo.intent.surface_rule.threshhold = 0.9;
+  const typoOut = run(typo);
+  assert.equal(typoOut.status, "HOLD");
+  assert.equal(typoOut.holds[0].code, "HOLD_SURFACE_RULE_FIELD_UNKNOWN");
+  assert.match(typoOut.holds[0].detail, /threshhold/);
+
+  const multiple = requestFor("up");
+  multiple.intent.surface_rule.z_extra = true;
+  multiple.intent.surface_rule.a_extra = true;
+  const multipleOut = run(multiple);
+  assert.equal(multipleOut.holds[0].detail, "unknown surface_rule fields: a_extra, z_extra");
+});
+
 test("invalid named facing rules HOLD instead of fabricating paint", () => {
   const unknown = requestFor("diagonal-ish");
   assert.equal(run(unknown).holds[0].code, "HOLD_SURFACE_RULE_DIRECTION_UNKNOWN");
