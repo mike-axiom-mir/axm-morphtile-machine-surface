@@ -1,0 +1,1 @@
+{"envelope_version":"0.1","request_id":"surface-facing-up-1","goal":"Paint upward-facing matter differently without hand-authoring paint expressions","intent":{"base_color":[0.2,0.25,0.3],"surface_rule":{"kind":"facing","direction":"up","threshold":0.6,"match_color":[0.9,0.55,0.2],"else_color":[0.25,0.3,0.4]}},"provenance":{"caller":"fixture"}}
