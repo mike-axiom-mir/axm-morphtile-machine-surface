@@ -1,7 +1,7 @@
 # Status
 
 - Machine version: 0.5.0
-- State: CANDIDATE — PRODUCER EVIDENCE PENDING EXACT-HEAD CI / INDEPENDENT VERIFICATION SEPARATE
+- State: CANDIDATE — PRODUCER TECHNICALLY VALID PASS WHEN CURRENT PR CHECKS ARE GREEN / INDEPENDENT VERIFICATION SEPARATE
 - Local test command: `npm test`
 - Pinned MorphTile runtime target: v0.4 at `ef2b3c6986aa1a333247feffc43a8443f17239d0`
 - Envelope: provisional v0.1
@@ -34,11 +34,10 @@ This belongs in Surface Machine, not MorphTile core. Current MorphTile already r
 
 ## Evidence boundary
 
-Producer compatibility with MorphTile `ef2b3c6986aa1a333247feffc43a8443f17239d0` is TESTED only after GitHub Actions is green on the exact candidate head. Independent Verification is a separate evidence lane and must not be inferred from producer CI. Later MorphTile commits are not covered automatically.
+Producer compatibility with MorphTile `ef2b3c6986aa1a333247feffc43a8443f17239d0` is TECHNICALLY VALID only when the current PR head's GitHub Actions checks are green. Independent Verification is a separate evidence lane and must not be inferred from producer CI. Later MorphTile commits are not covered automatically.
 
 ## HELD / open
 
-- Exact-head producer CI for v0.5 must be green before TECHNICALLY VALID is upgraded to PASS.
 - Independent Verification has not yet attacked this v0.5 candidate head.
 - No rendered observer or human visual inspection; VISUALLY GOOD remains `NOT_TESTED`.
 - No arbitrary-direction/vector facing rule without a demonstrated request.
