@@ -127,6 +127,51 @@ test("caller paint rejects top-level accessors before executing caller-controlle
   assert.equal(descriptorAfter.configurable, descriptorBefore.configurable);
 });
 
+test("caller intent descriptor-gates every authored field before executing accessors", () => {
+  const fields = ["base_color", "paint", "surface_rule", "pattern", "external_dependency"];
+
+  for (const field of fields) {
+    let accessorCalls = 0;
+    const request = clone(fixture);
+    request.request_id = "surface-intent-accessor-" + field.replace(/_/g, "-");
+    request.intent = {};
+    const getter = function authoredIntentGetter() {
+      accessorCalls += 1;
+      return null;
+    };
+    Object.defineProperty(request.intent, field, {
+      enumerable: true,
+      configurable: true,
+      get: getter
+    });
+    const descriptorBefore = Object.getOwnPropertyDescriptor(request.intent, field);
+
+    const out = run(request);
+
+    const descriptorAfter = Object.getOwnPropertyDescriptor(request.intent, field);
+    assert.equal(accessorCalls, 0, field + " accessor must not execute before Surface decides admissibility");
+    assert.equal(out.status, "HOLD");
+    assert.equal(out.holds[0].code, "HOLD_SURFACE_INTENT_NONPORTABLE_VALUE");
+    assert.match(out.holds[0].detail, new RegExp("intent\\." + field + " uses an accessor"));
+    assert.equal(out.candidate, null);
+    assert.equal(descriptorAfter.get, descriptorBefore.get);
+    assert.equal(descriptorAfter.enumerable, descriptorBefore.enumerable);
+    assert.equal(descriptorAfter.configurable, descriptorBefore.configurable);
+  }
+});
+
+test("ordinary portable intent remains unchanged across the descriptor preflight", () => {
+  const request = clone(fixture);
+  request.request_id = "surface-intent-portable-control";
+  const before = clone(request.intent);
+
+  const out = run(request);
+
+  assert.equal(out.status, "CANDIDATE");
+  assert.deepEqual(request.intent, before);
+  assert.equal(out.holds.length, 0);
+});
+
 test("caller paint rejects values that JSON would silently rewrite to null", () => {
   const expression = ["+", 0.2, undefined];
   const request = requestWithPaint(expression, "surface-paint-undefined-source-integrity");
