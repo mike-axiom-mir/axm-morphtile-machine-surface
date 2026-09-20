@@ -1,7 +1,7 @@
 # Status
 
 - Machine version: 0.5.1
-- State: CREATION SEMANTICS AND REVIEWED RENDER-EVIDENCE FOUNDATION INTEGRATED; GRADIENT RENDER-OBSERVATION CANDIDATE PRODUCER-TESTED
+- State: CREATION SEMANTICS + REVIEWED RENDER EVIDENCE + GRADIENT OBSERVATION INTEGRATED; STRIPES RENDER-OBSERVATION CANDIDATE OPEN
 - Local test command: `npm test`
 - Render evidence command: `npm run evidence:render`
 - Pinned MorphTile runtime target: v0.4 at `ef2b3c6986aa1a333247feffc43a8443f17239d0`
@@ -24,16 +24,19 @@
 - `base_color` is validated as an authored finite-number RGB triplet in 0..1 before emission.
 - Caller `paint` is bounded to `color` plus optional numeric `vars`; malformed or unknown fields HOLD rather than disappearing silently.
 - Caller-authored paint expressions remain pass-through data, but Surface Machine does not present shape validation as proof of expression semantics; candidates carry `CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED`.
-- Structural, runtime-render, visual-observation and aesthetic evidence remain separate claims.
+- Structural, runtime-render, reviewed-pixel, visual-observation and aesthetic evidence remain separate claims.
 - The reviewed render-evidence foundation is integrated on main with explicit Surface producer provenance, exact MorphTile runtime identity, reviewed pixel drift sentinels for `facing-up` and `checker`, and `visual_judgement: NOT_REVIEWED`.
+- The `axis-gradient` render observation is integrated and independently verified as `TECHNICALLY_RENDERED_UNBASELINED`; it does not hold reviewed-baseline or aesthetic authority.
 
 ## Current candidate
 
-PR #11 extends look-development evidence to the already-existing `axis_gradient` request without inventing new surface vocabulary and without silently widening reviewed visual authority.
+PR #12 extends the existing unbaselined render-observation path to the already-supported `stripes` material pattern. It does not add new material vocabulary or change MorphTile runtime semantics.
 
-It renders the same gradient request twice through the exact pinned MorphTile rasterizer and requires identical render hashes and target-pixel coverage. The resulting observation is explicitly labeled `TECHNICALLY_RENDERED_UNBASELINED`, `deterministic_replay: PASS`, `pixel_baseline: NOT_ESTABLISHED`, and `visual_judgement: NOT_REVIEWED`.
+The exact stripes request is rendered twice through the pinned MorphTile rasterizer and must produce identical render hashes and target-pixel coverage before it can emit `deterministic_replay: PASS`. Its receipt remains `pixel_baseline: NOT_ESTABLISHED`, `TECHNICALLY_RENDERED_UNBASELINED`, and `visual_judgement: NOT_REVIEWED`.
 
-The existing reviewed `facing-up` and `checker` baseline remains a closed exact case set. Gradient evidence is emitted separately as an observation and cannot silently become a reviewed pixel baseline merely because a deterministic PNG exists.
+The candidate also makes the render-evidence registry fail closed when two entries reuse the same case id or request id, preventing ambiguous portable receipts as observation coverage grows.
+
+The existing reviewed `facing-up` and `checker` baseline remains a closed exact case set. Neither gradient nor stripes may silently enter reviewed-baseline authority merely because a deterministic PNG exists.
 
 ## Reusable rules learned
 
@@ -43,23 +46,27 @@ Stable substrate semantics should become bounded creation vocabulary only when t
 
 **Technical render determinism and reviewed pixel authority are different evidence layers.** A new or repaired surface rule may earn deterministic technical rendering before anyone deliberately grants its pixels reviewed-baseline status. Neither layer is an aesthetic score.
 
+**Portable evidence identities must be collision-free.** Once more than one technical observation exists, duplicate case ids or duplicate request ids are ambiguous evidence and must fail closed rather than being resolved by array order or map overwrite.
+
 ## Placement decision
 
-The gradient creation rule and render-evidence harness belong in Surface Machine, not MorphTile core. Current MorphTile already represents position-aware procedural paint and supplies the deterministic rasterizer, render receipts, and PNG encoder needed for exact evidence. The current MorphTile main still matches the Surface runtime pin, so this activation found no missing universal material/runtime primitive and no compatibility-widening event to replay.
+The material creation rules and render-evidence harness belong in Surface Machine, not MorphTile core. Current MorphTile already represents position/normal-aware procedural paint, `checker|stripes|noise` material patterns, and supplies the deterministic rasterizer, render receipts, and PNG encoder needed for exact evidence. The current MorphTile main still matches the Surface runtime pin, so this activation found no missing universal material/runtime primitive and no compatibility-widening event to replay.
 
 ## Evidence boundary
 
 Independent Verification previously replayed and passed the repaired v0.5.1 gradient endpoint attack on exact Surface head `bf9db61993acb089b7d46b76135b9c4ae93392db` against exact MorphTile `ef2b3c6986aa1a333247feffc43a8443f17239d0`.
 
-The render-evidence provenance repair was independently verified on exact Surface head `941779901406961190e27a6abac9307ab00b89ae`, then integrated by the Creation Director. Surface main after that convergence is `a44a6a210e9099075cb67886f3d64187c3051924`; its post-merge test run `35503160116` passed.
+The render-evidence provenance repair was independently verified on exact Surface head `941779901406961190e27a6abac9307ab00b89ae`, then integrated by the Creation Director.
 
-For PR #11, producer run `35503869745` passed on exact candidate head `d8380c8f420afc277a535d0652f717a0bdcd777f`: 210 tests passed, the reviewed `facing-up` and `checker` hashes stayed unchanged, and the unbaselined `axis-gradient` observation replayed deterministically at hash `283d3a7efa3607ddc91433ebbd179c76daccf3113fc9b5fce627a60a5fd21c3a` with 1638 `mt_tower` pixels. That hash is recorded as technical observation evidence only; it is not a reviewed pixel baseline or aesthetic score.
+Surface PR #11 was independently verified by Verification PR #23 and integrated by the Creation Director. Integrated Surface main is `9d6d83fe9c898b4034d1f74685ca1744c8cd55e9`; its `axis-gradient` evidence remains an unbaselined technical observation rather than reviewed visual authority.
 
-`VISUALLY GOOD` remains `NOT_ASSESSED` regardless of technical CI. Independent Verification and Director integration remain separate.
+For PR #12, producer CI on the exact candidate head must pass before any TECHNICALLY RENDERED claim is promoted. Independent Verification and Director integration remain separate even after producer CI.
+
+`VISUALLY GOOD` remains `NOT_ASSESSED` regardless of technical CI.
 
 ## HELD / open
 
-- Independent Verification/Director integration of PR #11.
+- Producer CI + independent Verification/Director integration of PR #12.
 - `VISUALLY GOOD` / aesthetic acceptance remains `NOT_ASSESSED`.
 - No arbitrary-direction/vector facing rule without a demonstrated request.
 - No radial/ring/noise vocabulary merely because raw MorphTile paint could express it; add named creation contracts only when a real request earns them.

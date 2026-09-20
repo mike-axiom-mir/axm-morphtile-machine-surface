@@ -29,18 +29,25 @@ For each reviewed request the tool:
 10. requires the evidence producer identity to match the separately supplied exact Surface revision;
 11. fails closed if producer identity, runtime identity, request identity, target coverage, reviewed case set, or reviewed pixels drift.
 
-### Unbaselined deterministic observation
+### Unbaselined deterministic observations
 
-The existing `fixtures/request.axis-gradient.json` now runs as a separate technical observation. The machine renders the exact same gradient request twice through the pinned MorphTile runtime and requires both render hashes and target-pixel coverage values to match. The resulting receipt is explicitly marked:
+Two already-existing Surface semantics run as separate technical observations:
+
+- `fixtures/request.axis-gradient.json`
+- `fixtures/request.pattern-stripes.json`
+
+Each observation renders the exact same request twice through the pinned MorphTile runtime and requires both render hashes and target-pixel coverage values to match. The resulting receipt is explicitly marked:
 
 - `deterministic_replay: PASS`
 - `pixel_baseline: NOT_ESTABLISHED`
 - `evidence_tier: TECHNICALLY_RENDERED_UNBASELINED`
 - `visual_judgement: NOT_REVIEWED`
 
-This creates inspectable gradient evidence without silently giving a newly generated image the authority of the reviewed pixel baseline. A future reviewer may deliberately establish a pixel baseline after understanding the image; the evidence generator does not self-promote it.
+This creates inspectable evidence without silently giving a newly generated image the authority of the reviewed pixel baseline. A future reviewer may deliberately establish a pixel baseline after understanding an image; the evidence generator does not self-promote it.
 
-CI uploads `facing-up.png`, `checker.png`, `axis-gradient.png`, and `receipt.json` as the `surface-render-evidence` artifact.
+The evidence case registry also fails closed if two cases accidentally reuse the same case id or request id. This keeps portable receipts unambiguous as the observation set grows.
+
+CI uploads `facing-up.png`, `checker.png`, `axis-gradient.png`, `stripes.png`, and `receipt.json` as the `surface-render-evidence` artifact.
 
 ## Evidence meanings
 
@@ -83,7 +90,7 @@ Current reviewed drift sentinels:
 - `facing-up`: `54ca8766c52bb13e8a55268f5794a638befc49fc6045189826059e30f327fb1e`
 - `checker`: `a440cf8410e48730fef743fd1c86bfd88c49e982c912c662a89d68b27549d73d`
 
-The axis-gradient frame is a deterministic technical observation only until a separate review deliberately establishes broader visual evidence.
+The axis-gradient and stripes frames are deterministic technical observations only until a separate review deliberately establishes broader visual evidence.
 
 ## Run locally
 

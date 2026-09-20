@@ -66,19 +66,19 @@ Raw `paint` remains supported. A request that supplies both `paint` and `surface
 
 ## Render evidence boundary
 
-`npm run evidence:render` turns two existing bounded requests (`facing-up` and `checker`) into reproducible visual evidence using MorphTile's own pinned rasterizer rather than a Surface-private renderer. Each candidate is applied in a disposable MorphTile workspace through clone → edit → plan → commit, rendered with a fixed camera, hashed with `renderReceipt`, encoded with MorphTile's own PNG encoder, and compared against an explicit pixel baseline.
+`npm run evidence:render` uses MorphTile's own pinned rasterizer rather than a Surface-private renderer. Two reviewed drift sentinels (`facing-up` and `checker`) retain explicit pixel-baseline authority, while two existing semantics (`axis-gradient` and `stripes`) are rendered twice as unbaselined deterministic observations. Each candidate is applied in a disposable MorphTile workspace through clone → edit → plan → commit, rendered with a fixed camera, hashed with `renderReceipt`, and encoded with MorphTile's own PNG encoder.
 
-The baseline is a drift sentinel, not an aesthetic score. Matching it proves pixel identity to the reviewed exact-runtime baseline. The generated receipt keeps `visual_judgement: NOT_REVIEWED`; a human/AI observer opening the PNG is a separate evidence class, and `VISUALLY GOOD` remains a separate aesthetic claim. See `docs/RENDER_EVIDENCE.md`.
+The reviewed baseline is a drift sentinel, not an aesthetic score. Matching it proves pixel identity to the reviewed exact-runtime baseline. Unbaselined observations prove repeatable technical rendering only and remain `pixel_baseline: NOT_ESTABLISHED`. The evidence registry also fails closed on duplicate case ids or request ids so portable receipts cannot silently become ambiguous as coverage grows. Every generated receipt keeps `visual_judgement: NOT_REVIEWED`; opening the PNG and deciding whether it looks good are separate evidence classes. See `docs/RENDER_EVIDENCE.md`.
 
 ## Boundary answers
 
 1. **What it does:** Turns bounded surface intent into candidate MorphTile material facets, including deterministic facing rules, bounded `x|y|z` axis gradients, two MorphTile-backed material patterns, fail-closed intent normalization, and a separate deterministic render-evidence harness.
 2. **What it does not own:** Geometry topology, arbitrary caller-expression semantics, canonical worlds, merge authority, or automatic aesthetic truth.
 3. **What it accepts:** `axm.morphtile.surface-request/v0.1` in the provisional v0.1 envelope.
-4. **What it produces:** A `morphtile.facet-candidate/v0.4` material candidate. The evidence harness separately produces PNG + JSON receipts for fixed reviewed fixtures.
+4. **What it produces:** A `morphtile.facet-candidate/v0.4` material candidate. The evidence harness separately produces PNG + JSON receipts for fixed reviewed fixtures and unbaselined technical observations.
 5. **MorphTile interaction:** output goes through MorphTile's public contracts and clone → plan → commit → receipt → rollback path. MorphTile does not depend on this repository.
-6. **Evidence:** Structural/runtime validity, technical rendering, visual observation, and aesthetic quality remain separate. Exact runtime conformance covers facing rules, axis-gradient execution, the caller-paint fixture, named pattern attenuation, and fixed raster evidence; aesthetic quality is not inferred from those receipts.
-7. **When it cannot satisfy a request:** malformed or unsupported creation intent returns explicit `HOLD_SURFACE_*` codes; missing external material capability returns `HOLD_MATERIAL_DEPENDENCY_MISSING`; pixel drift fails the render-evidence path instead of being silently accepted.
+6. **Evidence:** Structural/runtime validity, technical rendering, reviewed pixel identity, visual observation, and aesthetic quality remain separate. Exact runtime conformance covers facing rules, axis-gradient execution, the caller-paint fixture, named pattern attenuation, and fixed raster evidence; aesthetic quality is not inferred from those receipts.
+7. **When it cannot satisfy a request:** malformed or unsupported creation intent returns explicit `HOLD_SURFACE_*` codes; missing external material capability returns `HOLD_MATERIAL_DEPENDENCY_MISSING`; reviewed pixel drift or ambiguous evidence identities fail the render-evidence path instead of being silently accepted.
 
 ## Run
 
@@ -97,9 +97,9 @@ Node 18 or later; zero Surface runtime dependencies; no secrets or network requi
 - EXPERIMENTAL: envelope v0.1, surface-rule vocabulary, material-pattern vocabulary, every candidate schema, and the render-evidence harness in this machine.
 - COMPATIBILITY TARGET: exact MorphTile v0.4 snapshot `ef2b3c6986aa1a333247feffc43a8443f17239d0`.
 - NOT IMPLIED: later MorphTile commits are not covered automatically; compatibility is widened only by rerunning deterministic receipts against an exact identity.
-- RENDERED: fixed `facing-up` and `checker` fixtures have deterministic pixel receipts at the exact pin; matching hashes are drift evidence only.
-- OBSERVED: the first generated artifact was opened during the producer activation and the target tower was visible in both materially distinct frames.
+- RENDERED: fixed `facing-up` and `checker` fixtures have reviewed deterministic pixel receipts at the exact pin; `axis-gradient` and `stripes` are separate unbaselined deterministic render observations.
+- OBSERVED: the first reviewed render artifact was opened during the producer activation and the target tower was visible in both materially distinct frames. Newly generated unbaselined observations remain `NOT_REVIEWED` until actually opened and described.
 - NOT ASSESSED: aesthetic quality / `VISUALLY GOOD`.
-- HELD: automatic aesthetic acceptance; independent review of the render-evidence candidate remains separate from producer evidence.
+- HELD: automatic aesthetic acceptance; independent review of any new render-evidence candidate remains separate from producer evidence.
 
 This is a bounded deterministic creation machine, not evidence that MorphTile can autonomously manufacture MorphTile.

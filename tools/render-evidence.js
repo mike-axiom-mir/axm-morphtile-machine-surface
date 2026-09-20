@@ -6,6 +6,7 @@ const path = require("node:path");
 const { MACHINE, run } = require("../src");
 const facingFixture = require("../fixtures/request.facing-up.json");
 const checkerFixture = require("../fixtures/request.pattern-checker.json");
+const stripesFixture = require("../fixtures/request.pattern-stripes.json");
 const gradientFixture = require("../fixtures/request.axis-gradient.json");
 const expectedBaseline = require("../fixtures/render-evidence.expected.json");
 
@@ -35,6 +36,22 @@ function requireProducerIdentity(identity, label = "producer identity") {
     fail(`${label}: commit must be an exact 40-character lowercase git SHA`);
   }
   return Object.freeze({ repository: identity.repository, commit: identity.commit });
+}
+
+function assertUniqueEvidenceIdentities(entries) {
+  const ids = new Set();
+  const requestIds = new Set();
+  for (const entry of entries) {
+    if (!entry || !entry.receipt) fail("render evidence entry is missing its receipt");
+    const id = entry.receipt.id;
+    const requestId = entry.receipt.request_id;
+    if (typeof id !== "string" || !id) fail("render evidence case id must be a non-empty string");
+    if (typeof requestId !== "string" || !requestId) fail(`${id}: render evidence request_id must be a non-empty string`);
+    if (ids.has(id)) fail(`duplicate render evidence case id: ${id}`);
+    if (requestIds.has(requestId)) fail(`duplicate render evidence request_id: ${requestId}`);
+    ids.add(id);
+    requestIds.add(requestId);
+  }
 }
 
 function applyCandidateToTower(MorphTile, result, label) {
@@ -134,8 +151,11 @@ function buildEvidence(MorphTile, runtimeCommit, producerIdentity) {
     renderCase(MorphTile, checkerFixture, "checker")
   ];
   const observations = [
-    renderDeterministicObservation(MorphTile, gradientFixture, "axis-gradient")
+    renderDeterministicObservation(MorphTile, gradientFixture, "axis-gradient"),
+    renderDeterministicObservation(MorphTile, stripesFixture, "stripes")
   ];
+
+  assertUniqueEvidenceIdentities([...cases, ...observations]);
 
   if (cases[0].receipt.render_sha256 === cases[1].receipt.render_sha256) {
     fail("facing-up and checker evidence unexpectedly produced identical render hashes");
@@ -264,5 +284,6 @@ module.exports = {
   buildEvidence,
   verifyBaseline,
   writeEvidence,
-  requireProducerIdentity
+  requireProducerIdentity,
+  assertUniqueEvidenceIdentities
 };
