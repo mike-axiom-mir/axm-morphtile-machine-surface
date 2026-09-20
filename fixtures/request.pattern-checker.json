@@ -1,0 +1,1 @@
+{"envelope_version":"0.1","request_id":"surface-pattern-checker-1","goal":"Apply a deterministic checker modulation without hand-authoring material runtime fields","intent":{"base_color":[0.2,0.25,0.3],"pattern":{"kind":"checker","scale":0.4}},"provenance":{"caller":"fixture"}}

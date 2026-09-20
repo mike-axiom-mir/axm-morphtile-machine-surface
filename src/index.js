@@ -3,7 +3,8 @@
 const { assertRequest, result } = require("./envelope");
 const { SurfaceIntentError, normalizeSurfaceIntent } = require("./surface-intent");
 const { SurfaceRuleError, compileSurfaceRule } = require("./surface-rules");
-const MACHINE = { id: "axm.morphtile.machine.surface", version: "0.3.0" };
+const { SurfacePatternError, compileSurfacePattern } = require("./surface-patterns");
+const MACHINE = { id: "axm.morphtile.machine.surface", version: "0.4.0" };
 
 function hold(request, error, fallbackCode) {
   const code = error && error.code ? error.code : fallbackCode;
@@ -51,34 +52,57 @@ function run(request) {
     }
   }
 
+  let normalizedPattern = null;
+  let patternMaterial = {};
+  if (intent.pattern !== undefined) {
+    try {
+      const compiled = compileSurfacePattern(intent.pattern);
+      normalizedPattern = compiled.normalized;
+      patternMaterial = compiled.material;
+    } catch (error) {
+      return hold(request, error, "HOLD_SURFACE_PATTERN_INVALID");
+    }
+  }
+
   paint = paint || { color: [["if", [">", ["var", "ny"], 0.6], 0.9, 0.25], 0.55, 0.2] };
 
-  let structural;
+  const evidence = [];
   const warnings = [];
   if (normalizedRule) {
-    structural = {
+    evidence.push({
       kind: "STRUCTURAL",
       status: "PASS",
       check: "named surface rule compiled to MorphTile normal paint expression",
       rule: normalizedRule
-    };
+    });
   } else if (intent.paint) {
-    structural = {
+    evidence.push({
       kind: "STRUCTURAL",
       status: "PASS",
       check: "caller paint shape and numeric vars passed Surface Machine intent validation; expression semantics remain runtime-owned"
-    };
+    });
     warnings.push({
       code: "CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED",
       detail: "caller-authored paint expressions are preserved but their runtime meaning belongs to MorphTile"
     });
   } else {
-    structural = {
+    evidence.push({
       kind: "STRUCTURAL",
       status: "PASS",
       check: "default generated paint emitted after bounded surface intent validation"
-    };
+    });
   }
+
+  if (normalizedPattern) {
+    evidence.push({
+      kind: "STRUCTURAL",
+      status: "PASS",
+      check: "named material pattern compiled to MorphTile pattern/scale fields",
+      pattern: normalizedPattern
+    });
+  }
+
+  evidence.push({ kind: "VISUAL", status: "NOT_TESTED", check: "no rendered observer ran in this machine pass" });
 
   return result(request, MACHINE, "CANDIDATE", {
     candidate: {
@@ -89,14 +113,12 @@ function run(request) {
         source: null,
         data: {
           color: intent.base_color || [0.5, 0.5, 0.5],
-          paint
+          paint,
+          ...patternMaterial
         }
       }
     },
-    evidence: [
-      structural,
-      { kind: "VISUAL", status: "NOT_TESTED", check: "no rendered observer ran in this machine pass" }
-    ],
+    evidence,
     warnings
   });
 }

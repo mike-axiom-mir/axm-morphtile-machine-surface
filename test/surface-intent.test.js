@@ -8,8 +8,8 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-test("machine v0.3 fails closed on malformed or unknown top-level surface intent", () => {
-  assert.equal(MACHINE.version, "0.3.0");
+test("machine v0.4 fails closed on malformed or unknown top-level surface intent", () => {
+  assert.equal(MACHINE.version, "0.4.0");
 
   for (const intent of ["paint", [], 7]) {
     const out = run({ ...rawFixture, request_id: "surface-intent-invalid-" + String(intent), intent });

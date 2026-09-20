@@ -1,6 +1,6 @@
 "use strict";
 
-const INTENT_FIELDS = Object.freeze(["base_color", "paint", "surface_rule", "external_dependency"]);
+const INTENT_FIELDS = Object.freeze(["base_color", "paint", "surface_rule", "pattern", "external_dependency"]);
 const PAINT_FIELDS = Object.freeze(["color", "vars"]);
 
 class SurfaceIntentError extends Error {
@@ -72,6 +72,7 @@ function normalizeSurfaceIntent(intent) {
   if (intent.base_color !== undefined) out.base_color = rgb(intent.base_color, "base_color");
   if (intent.paint !== undefined) out.paint = normalizePaint(intent.paint);
   if (intent.surface_rule !== undefined) out.surface_rule = JSON.parse(JSON.stringify(intent.surface_rule));
+  if (intent.pattern !== undefined) out.pattern = JSON.parse(JSON.stringify(intent.pattern));
   if (intent.external_dependency !== undefined) {
     if (typeof intent.external_dependency !== "string" || !intent.external_dependency.trim()) {
       throw new SurfaceIntentError("HOLD_SURFACE_DEPENDENCY_INVALID", "external_dependency must be a non-empty string");
