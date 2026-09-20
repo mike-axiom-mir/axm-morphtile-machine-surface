@@ -36,20 +36,25 @@ The candidate therefore:
 
 - rejects explicit `undefined` values at the top-level Surface intent boundary instead of treating a present field as omitted;
 - rejects explicit `undefined` inside compiled rule/pattern authoring before a domain compiler can reinterpret it as a defaulted field;
-- rejects non-enumerable nested compiled-authoring fields instead of silently stripping them from the semantic snapshot;
+- rejects non-enumerable nested compiled semantic data instead of silently stripping it from the semantic snapshot;
+- preserves the established hidden `toJSON` source-integrity boundary: a non-enumerable data-property `toJSON` function is excluded inertly, never executed, so semantic authored fields keep their validation/error priority;
 - preserves the existing rule that genuinely omitted optional fields may still receive their documented deterministic defaults;
 - leaves raw paint on its existing stricter portable-preservation path, which already rejects `undefined` and non-enumerable data;
 - changes no material vocabulary, runtime expression meaning, reviewed pixel authority, or aesthetic judgement.
 
 Regression-only head `6e2ab64055222b6d959a39282182db110eb1f6e9` failed Actions run `35540284912` at `npm test`: all three initial authored-presence probes returned `CANDIDATE` where an explicit HOLD was required. The run reported 246 PASS / 3 FAIL and skipped render evidence after the test failure. This preserves fail-first evidence before the repair.
 
+The first repaired candidate head `bcd30a470974a9aa9b457edd74c8350a3e131efa` closed all authored-presence probes but correctly exposed a regression against two existing pre-serialization priority tests: hidden non-enumerable `toJSON` hooks on unsupported rule/pattern authoring were being rejected as nonportable before the semantic unknown-kind HOLD could win. Actions run `35540436381` reported 249 PASS / 2 FAIL. The candidate was then narrowed so only that already-established hidden data-property serialization hook remains inertly excluded; other hidden compiled semantic data still HOLDs.
+
 No MorphTile-core material primitive is missing for this repair.
 
 ## Reusable rules learned
 
-**Authored presence is meaning.** A caller field that exists but cannot survive the Surface boundary unchanged must not be reinterpreted as omission. Explicit `undefined`, non-enumerable authored data, and genuinely absent fields are distinct source states.
+**Authored presence is meaning.** A caller field that exists but cannot survive the Surface boundary unchanged must not be reinterpreted as omission. Explicit `undefined`, non-enumerable authored semantic data, and genuinely absent fields are distinct source states.
 
 **Defaults apply only to absence.** A compiler may default an omitted optional field, but it must not reach that default by silently deleting a field that the caller actually supplied.
+
+**Metadata exclusion and semantic omission are different.** A known hidden serialization hook may be deliberately excluded without execution when it is explicitly outside the compiled grammar and existing tests require semantic-field validation to retain priority. That exception must stay named and narrow; it is not permission to drop arbitrary hidden authored data.
 
 **Source-integrity boundaries are recursive.** A top-level descriptor/Proxy gate is incomplete if a later semantic compiler directly reads nested caller-owned objects or arrays. Every ownership boundary must be converted to a trap-free plain-data snapshot before semantic reads begin.
 
@@ -78,6 +83,7 @@ Surface remains deliberately pinned to exact tested MorphTile `26b89a77f6a90715a
 - Integrated Surface baseline before this candidate: `536a745ddea4d996d0daf193649db939fe3ade83`.
 - Regression-only candidate head `6e2ab64055222b6d959a39282182db110eb1f6e9`: Actions run `35540284912` = FAILURE at `npm test`, 246 PASS / 3 FAIL, preserving the authored-presence gap before repair.
 - The three initial failing cases were: nested non-enumerable compiled authoring silently dropped, explicit `pattern.scale: undefined` collapsed into the pattern default, and explicit top-level `intent.pattern: undefined` collapsed into omission.
+- Intermediate repaired head `bcd30a470974a9aa9b457edd74c8350a3e131efa`: Actions run `35540436381` = FAILURE at `npm test`, 249 PASS / 2 FAIL, showing the initial repair over-broadened hidden-field rejection and changed established `toJSON` semantic-error priority.
 - Producer CI must pass on the final exact candidate head after every candidate mutation before `TECHNICALLY VALID` is claimed for that head.
 - Independent Verification remains separate from producer CI.
 - Existing reviewed render evidence and technical observation evidence may stay green without implying that this source-integrity repair changed appearance.
