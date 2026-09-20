@@ -1,11 +1,12 @@
 # Status
 
 - Machine version: 0.5.1
-- State: CANDIDATE REPAIR — PRODUCER TECHNICALLY VALID ONLY WHEN CURRENT PR CHECKS ARE GREEN / INDEPENDENT VERIFICATION SEPARATE
+- State: CREATION SEMANTICS INDEPENDENTLY VERIFIED AT EXACT PIN; RENDER-EVIDENCE TOOL IS A SEPARATE OPEN CANDIDATE
 - Local test command: `npm test`
+- Render evidence command: `npm run evidence:render`
 - Pinned MorphTile runtime target: v0.4 at `ef2b3c6986aa1a333247feffc43a8443f17239d0`
 - Envelope: provisional v0.1
-- Visual proof: none
+- Visual quality: `NOT_ASSESSED`
 
 ## Implemented
 
@@ -23,24 +24,34 @@
 - `base_color` is validated as an authored finite-number RGB triplet in 0..1 before emission.
 - Caller `paint` is bounded to `color` plus optional numeric `vars`; malformed or unknown fields HOLD rather than disappearing silently.
 - Caller-authored paint expressions remain pass-through data, but Surface Machine does not present shape validation as proof of expression semantics; candidates carry `CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED`.
-- Structural and visual evidence remain separate; visual evidence is `NOT_TESTED`.
+- Structural, runtime-render, visual-observation and aesthetic evidence remain separate claims.
+
+## Current render-evidence candidate
+
+The open candidate adds a deterministic look-development evidence path for one named facing request and one named pattern request. It applies each candidate through a disposable MorphTile clone → edit → plan → commit path, renders through the pinned MorphTile rasterizer, records exact render hashes and target pixel coverage, writes PNG + JSON evidence, and compares the result with an explicit fail-closed pixel baseline.
+
+A matching pixel baseline proves identity to the reviewed technical render baseline. It is not an aesthetic score. The generated receipt keeps `visual_judgement: NOT_REVIEWED`; human/AI observation and `VISUALLY GOOD` remain separate.
 
 ## Reusable rules learned
 
-When exact endpoint identity is part of a deterministic creation contract, endpoint values must be represented as explicit branches rather than reconstructed by floating-point interpolation. Mixed ascending/descending channel tests are required because algebraic equivalence does not imply IEEE identity. Creation vocabulary should wrap already-stable substrate semantics when it removes repeated hand-authored expression reasoning without creating a new runtime contract.
+When exact endpoint identity is part of a deterministic creation contract, endpoint values must be represented as explicit branches rather than reconstructed by floating-point interpolation. Mixed ascending/descending channel tests are required because algebraic equivalence does not imply IEEE identity.
+
+Stable substrate semantics should become bounded creation vocabulary only when they remove repeated hand-authored reasoning without inventing a new runtime contract. Render evidence should likewise use the substrate's real renderer rather than a private approximation. Pixel hashes are useful as drift sentinels, but must never be promoted into aesthetic approval.
 
 ## Placement decision
 
-This repair belongs in Surface Machine, not MorphTile core. Current MorphTile already represents position-aware procedural paint and supplies the existing expression words required for explicit endpoint branches and interior interpolation. Independent Verification diagnosed a producer compilation error rather than a missing universal material primitive.
+The gradient repair and render-evidence harness belong in Surface Machine, not MorphTile core. Current MorphTile already represents position-aware procedural paint and already supplies the built-in deterministic rasterizer, render receipts, and PNG encoder needed for exact evidence. No missing universal material/runtime primitive was found.
 
 ## Evidence boundary
 
-Independent Verification rejected merged v0.5.0 exact-clamp/bounds claims on mixed-direction RGB because interpolation at `t=1` produced microscopic IEEE drift. v0.5.1 adds the producer repair and exact adversarial runtime receipt. Producer TECHNICALLY VALID is earned only by the current candidate head's green GitHub Actions against exact MorphTile `ef2b3c6986aa1a333247feffc43a8443f17239d0`. Independent re-verification of the repaired head remains separate and required before upgrading that lane to PASS.
+Independent Verification previously rejected merged v0.5.0 exact-clamp/bounds claims on mixed-direction RGB because interpolation at `t=1` produced microscopic IEEE drift. v0.5.1 repaired that defect. Verification PR #20 independently replayed the failing attack against exact Surface head `bf9db61993acb089b7d46b76135b9c4ae93392db` and exact MorphTile `ef2b3c6986aa1a333247feffc43a8443f17239d0`; its dedicated and full suites passed. That upgrades the repaired v0.5.1 semantic lane to exact-revision PASS only.
+
+The render-evidence candidate has producer evidence only until independent Verification/Director review. Its first generated `facing-up` and `checker` images were opened and observed to be visibly distinct with `mt_tower` present, but no aesthetic quality judgement was promoted from that observation.
 
 ## HELD / open
 
-- Independent Verification of the repaired v0.5.1 exact head.
-- No rendered observer or human visual inspection; VISUALLY GOOD remains `NOT_TESTED`.
+- Independent Verification/Director integration of the render-evidence candidate.
+- `VISUALLY GOOD` / aesthetic acceptance remains `NOT_ASSESSED`.
 - No arbitrary-direction/vector facing rule without a demonstrated request.
 - No radial/ring/noise vocabulary merely because raw MorphTile paint could express it; add named creation contracts only when a real request earns them.
 - No arbitrary/noise pattern vocabulary merely because the runtime currently has a fallback implementation branch.
