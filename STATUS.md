@@ -1,7 +1,7 @@
 # Status
 
 - Machine version: 0.5.1
-- State: CREATION SEMANTICS AND REVIEWED RENDER-EVIDENCE FOUNDATION INTEGRATED; GRADIENT RENDER-OBSERVATION CANDIDATE UNDER TEST
+- State: CREATION SEMANTICS AND REVIEWED RENDER-EVIDENCE FOUNDATION INTEGRATED; GRADIENT RENDER-OBSERVATION CANDIDATE PRODUCER-TESTED
 - Local test command: `npm test`
 - Render evidence command: `npm run evidence:render`
 - Pinned MorphTile runtime target: v0.4 at `ef2b3c6986aa1a333247feffc43a8443f17239d0`
@@ -29,7 +29,7 @@
 
 ## Current candidate
 
-The current bounded candidate extends look-development evidence to the already-existing `axis_gradient` request without inventing new surface vocabulary and without silently widening reviewed visual authority.
+PR #11 extends look-development evidence to the already-existing `axis_gradient` request without inventing new surface vocabulary and without silently widening reviewed visual authority.
 
 It renders the same gradient request twice through the exact pinned MorphTile rasterizer and requires identical render hashes and target-pixel coverage. The resulting observation is explicitly labeled `TECHNICALLY_RENDERED_UNBASELINED`, `deterministic_replay: PASS`, `pixel_baseline: NOT_ESTABLISHED`, and `visual_judgement: NOT_REVIEWED`.
 
@@ -53,12 +53,13 @@ Independent Verification previously replayed and passed the repaired v0.5.1 grad
 
 The render-evidence provenance repair was independently verified on exact Surface head `941779901406961190e27a6abac9307ab00b89ae`, then integrated by the Creation Director. Surface main after that convergence is `a44a6a210e9099075cb67886f3d64187c3051924`; its post-merge test run `35503160116` passed.
 
-The new gradient render-observation candidate must still earn producer exact-head CI before any new technical-render claim is published. `VISUALLY GOOD` remains `NOT_ASSESSED` regardless of CI outcome.
+For PR #11, producer run `35503869745` passed on exact candidate head `d8380c8f420afc277a535d0652f717a0bdcd777f`: 210 tests passed, the reviewed `facing-up` and `checker` hashes stayed unchanged, and the unbaselined `axis-gradient` observation replayed deterministically at hash `283d3a7efa3607ddc91433ebbd179c76daccf3113fc9b5fce627a60a5fd21c3a` with 1638 `mt_tower` pixels. That hash is recorded as technical observation evidence only; it is not a reviewed pixel baseline or aesthetic score.
+
+`VISUALLY GOOD` remains `NOT_ASSESSED` regardless of technical CI. Independent Verification and Director integration remain separate.
 
 ## HELD / open
 
-- Producer exact-head CI for the current gradient render-observation candidate until completed.
-- Independent Verification/Director integration of the current candidate after producer evidence exists.
+- Independent Verification/Director integration of PR #11.
 - `VISUALLY GOOD` / aesthetic acceptance remains `NOT_ASSESSED`.
 - No arbitrary-direction/vector facing rule without a demonstrated request.
 - No radial/ring/noise vocabulary merely because raw MorphTile paint could express it; add named creation contracts only when a real request earns them.
