@@ -23,8 +23,8 @@ function requestFor(direction) {
   };
 }
 
-test("machine v0.2 compiles six named facing directions into MorphTile normal variables", () => {
-  assert.equal(MACHINE.version, "0.2.0");
+test("machine v0.3 compiles six named facing directions into MorphTile normal variables", () => {
+  assert.equal(MACHINE.version, "0.3.0");
   for (const [direction, normalExpr] of Object.entries(NORMAL_EXPR)) {
     const out = run(requestFor(direction));
     assert.equal(out.status, "CANDIDATE", direction);
@@ -68,8 +68,7 @@ test("unknown facing-rule fields HOLD instead of being silently ignored", () => 
   const multiple = requestFor("up");
   multiple.intent.surface_rule.z_extra = true;
   multiple.intent.surface_rule.a_extra = true;
-  const multipleOut = run(multiple);
-  assert.equal(multipleOut.holds[0].detail, "unknown surface_rule fields: a_extra, z_extra");
+  assert.equal(run(multiple).holds[0].detail, "unknown surface_rule fields: a_extra, z_extra");
 });
 
 test("invalid named facing rules HOLD instead of fabricating paint", () => {
@@ -83,4 +82,28 @@ test("invalid named facing rules HOLD instead of fabricating paint", () => {
   const color = requestFor("up");
   color.intent.surface_rule.match_color = [1, 0.5, 2];
   assert.equal(run(color).holds[0].code, "HOLD_SURFACE_RULE_COLOR_INVALID");
+});
+
+test("facing rules reject authored numeric lookalikes instead of coercing meaning", () => {
+  const threshold = requestFor("up");
+  threshold.request_id = "surface-facing-threshold-string";
+  threshold.intent.surface_rule.threshold = "0.6";
+  const thresholdOut = run(threshold);
+  assert.equal(thresholdOut.status, "HOLD");
+  assert.equal(thresholdOut.holds[0].code, "HOLD_SURFACE_RULE_THRESHOLD_INVALID");
+  assert.equal(thresholdOut.candidate, null);
+
+  for (const [label, bad] of [
+    ["null", null],
+    ["string", "0.8"],
+    ["boolean", false]
+  ]) {
+    const request = requestFor("up");
+    request.request_id = "surface-facing-match-color-" + label;
+    request.intent.surface_rule.match_color = [bad, 0.8, 0.7];
+    const out = run(request);
+    assert.equal(out.status, "HOLD", label);
+    assert.equal(out.holds[0].code, "HOLD_SURFACE_RULE_COLOR_INVALID", label);
+    assert.equal(out.candidate, null, label);
+  }
 });

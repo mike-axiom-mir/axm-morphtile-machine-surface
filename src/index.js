@@ -1,11 +1,12 @@
 "use strict";
 
 const { assertRequest, result } = require("./envelope");
+const { SurfaceIntentError, normalizeSurfaceIntent } = require("./surface-intent");
 const { SurfaceRuleError, compileSurfaceRule } = require("./surface-rules");
-const MACHINE = { id: "axm.morphtile.machine.surface", version: "0.2.0" };
+const MACHINE = { id: "axm.morphtile.machine.surface", version: "0.3.0" };
 
-function holdRule(request, error) {
-  const code = error instanceof SurfaceRuleError ? error.code : "HOLD_SURFACE_RULE_INVALID";
+function hold(request, error, fallbackCode) {
+  const code = error && error.code ? error.code : fallbackCode;
   return result(request, MACHINE, "HOLD", {
     holds: [{ code, detail: error && error.message ? error.message : String(error) }],
     suggested_missing_capability: null
@@ -14,7 +15,14 @@ function holdRule(request, error) {
 
 function run(request) {
   assertRequest(request);
-  const intent = request.intent || {};
+
+  let intent;
+  try {
+    intent = normalizeSurfaceIntent(request.intent);
+  } catch (error) {
+    return hold(request, error, "HOLD_SURFACE_INTENT_INVALID");
+  }
+
   if (intent.external_dependency && !(request.available_capabilities || []).includes(intent.external_dependency)) {
     return result(request, MACHINE, "HOLD", {
       dependencies: [intent.external_dependency],
@@ -23,33 +31,73 @@ function run(request) {
     });
   }
 
-  if (intent.paint && intent.surface_rule) {
-    return holdRule(request, new SurfaceRuleError("HOLD_SURFACE_RULE_CONFLICT", "paint and surface_rule cannot both author the same material candidate"));
+  if (intent.paint && intent.surface_rule !== undefined) {
+    return hold(
+      request,
+      new SurfaceRuleError("HOLD_SURFACE_RULE_CONFLICT", "paint and surface_rule cannot both author the same material candidate"),
+      "HOLD_SURFACE_RULE_INVALID"
+    );
   }
 
   let paint = intent.paint;
   let normalizedRule = null;
-  if (intent.surface_rule) {
+  if (intent.surface_rule !== undefined) {
     try {
       const compiled = compileSurfaceRule(intent.surface_rule);
       paint = compiled.paint;
       normalizedRule = compiled.normalized;
     } catch (error) {
-      return holdRule(request, error);
+      return hold(request, error, "HOLD_SURFACE_RULE_INVALID");
     }
   }
 
   paint = paint || { color: [["if", [">", ["var", "ny"], 0.6], 0.9, 0.25], 0.55, 0.2] };
-  const structural = normalizedRule
-    ? { kind: "STRUCTURAL", status: "PASS", check: "named surface rule compiled to MorphTile normal paint expression", rule: normalizedRule }
-    : { kind: "STRUCTURAL", status: "PASS", check: "material uses MorphTile generated paint data" };
+
+  let structural;
+  const warnings = [];
+  if (normalizedRule) {
+    structural = {
+      kind: "STRUCTURAL",
+      status: "PASS",
+      check: "named surface rule compiled to MorphTile normal paint expression",
+      rule: normalizedRule
+    };
+  } else if (intent.paint) {
+    structural = {
+      kind: "STRUCTURAL",
+      status: "PASS",
+      check: "caller paint shape and numeric vars passed Surface Machine intent validation; expression semantics remain runtime-owned"
+    };
+    warnings.push({
+      code: "CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED",
+      detail: "caller-authored paint expressions are preserved but their runtime meaning belongs to MorphTile"
+    });
+  } else {
+    structural = {
+      kind: "STRUCTURAL",
+      status: "PASS",
+      check: "default generated paint emitted after bounded surface intent validation"
+    };
+  }
 
   return result(request, MACHINE, "CANDIDATE", {
-    candidate: { schema: "morphtile.facet-candidate/v0.4", facet: "material", value: { type: "generated", source: null, data: { color: intent.base_color || [0.5, 0.5, 0.5], paint } } },
+    candidate: {
+      schema: "morphtile.facet-candidate/v0.4",
+      facet: "material",
+      value: {
+        type: "generated",
+        source: null,
+        data: {
+          color: intent.base_color || [0.5, 0.5, 0.5],
+          paint
+        }
+      }
+    },
     evidence: [
       structural,
       { kind: "VISUAL", status: "NOT_TESTED", check: "no rendered observer ran in this machine pass" }
-    ]
+    ],
+    warnings
   });
 }
 

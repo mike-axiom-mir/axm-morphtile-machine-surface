@@ -3,22 +3,24 @@
 Tested contract target:
 
 - repository: mike-axiom-mir/axm-morphtile
-- commit: 4346df01ed18cd1336064f9323d7766ff4f6338a
+- commit: b6b086edb70fd4657495fcf01cb9fcdedceafdaf
 - format: v0.4
 - provisional envelope: v0.1
-- fixture set: v0.2
+- fixture set: v0.3
 
 The adapter emits candidate data only. The receiving caller must validate it against the applicable MorphTile runtime, propose it through clone/plan, inspect conflicts and HOLDs, commit only with the applicable authority, preserve the receipt, and retain rollback.
 
 ## Exact pinned-runtime conformance lane
 
-CI checks out the exact `tested_against.commit` above into an isolated `.runtime/morphtile` path. The runtime test passes all six named facing-rule candidates through real MorphTile `createTile`, `validateTile`, and `compileMesh`.
+CI checks out the exact `tested_against.commit` above into an isolated `.runtime/morphtile` path and asserts that the CI runtime identity equals the manifest pin.
 
-For the pinned default box mesh, each named direction must deterministically paint exactly one face with `match_color` and the other five faces with `else_color`. Exact triangle, position, material-color, and per-direction face-count receipts make runtime drift visible.
+The runtime suite passes all six named facing-rule candidates through real MorphTile `createTile`, `validateTile`, and `compileMesh`. For the pinned default box mesh, each named direction must paint exactly one face with `match_color` and the other five faces with `else_color`; exact triangle, position, material-color and face-count receipts make drift visible.
 
-The CI-declared runtime commit must equal `machine.json.tested_against.commit`, so the compatibility claim cannot silently drift to another MorphTile checkout.
+The suite also executes the existing caller-authored raw-paint fixture in the same runtime. Surface Machine validates the bounded paint envelope, but MorphTile execution supplies the semantic evidence: the default box must produce exactly one upward face with the authored match channel values and five faces with the fallback values.
 
-This candidate advances the pin from the older MorphTile snapshot `13d83a2b2c0d12644442d3d9e45bcbe0af19876a` to exact current-main snapshot `4346df01ed18cd1336064f9323d7766ff4f6338a`. That newer snapshot is six commits ahead and includes substantial core changes, so compatibility is earned by replaying the same semantic receipts rather than inferred from source similarity.
+Authored numeric-looking values are validated before normalization. Surface Machine must not reinterpret strings, booleans, or null through numeric coercion when the authoring contract requires a number.
+
+The compatibility pin advances from `a579182ae585e5722ac87dd0cc8209963b18d000` to `b6b086edb70fd4657495fcf01cb9fcdedceafdaf`. Compatibility is earned by replaying the semantic receipts rather than inferred from source similarity.
 
 This checkout is test infrastructure only. Surface Machine does not vendor MorphTile or add a runtime dependency on the repository.
 

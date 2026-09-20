@@ -33,11 +33,13 @@ function rgb(value, field) {
   if (!Array.isArray(value) || value.length !== 3) {
     throw new SurfaceRuleError("HOLD_SURFACE_RULE_COLOR_INVALID", field + " must be an RGB triplet");
   }
-  const out = value.map(Number);
-  if (out.some((v) => !Number.isFinite(v) || v < 0 || v > 1)) {
-    throw new SurfaceRuleError("HOLD_SURFACE_RULE_COLOR_INVALID", field + " channels must be finite numbers from 0 to 1");
+  if (value.some((v) => typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 1)) {
+    throw new SurfaceRuleError(
+      "HOLD_SURFACE_RULE_COLOR_INVALID",
+      field + " channels must be authored as finite numbers from 0 to 1"
+    );
   }
-  return out;
+  return value.slice();
 }
 
 function facingExpression(direction) {
@@ -52,9 +54,12 @@ function facingExpression(direction) {
 function compileFacing(rule) {
   assertOnlyFields(rule, FACING_FIELDS);
   const direction = rule.direction;
-  const threshold = rule.threshold === undefined ? 0.6 : Number(rule.threshold);
-  if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
-    throw new SurfaceRuleError("HOLD_SURFACE_RULE_THRESHOLD_INVALID", "facing threshold must be a finite number from 0 to 1");
+  const threshold = rule.threshold === undefined ? 0.6 : rule.threshold;
+  if (typeof threshold !== "number" || !Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
+    throw new SurfaceRuleError(
+      "HOLD_SURFACE_RULE_THRESHOLD_INVALID",
+      "facing threshold must be authored as a finite number from 0 to 1"
+    );
   }
   const match = rgb(rule.match_color, "match_color");
   const otherwise = rgb(rule.else_color, "else_color");
