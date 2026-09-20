@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — render-evidence v0.3
+
+- Extended deterministic render evidence to the existing `axis_gradient` request without adding new material vocabulary.
+- Added an unbaselined observation tier that renders the exact gradient twice and requires identical pixel hashes and target coverage before emitting `deterministic_replay: PASS`.
+- Kept reviewed pixel-baseline authority limited to the existing `facing-up` and `checker` cases; the gradient receipt is explicitly `pixel_baseline: NOT_ESTABLISHED` and `TECHNICALLY_RENDERED_UNBASELINED`.
+- Added `axis-gradient.png` to the evidence artifact for later observation while preserving `visual_judgement: NOT_REVIEWED` and `VISUALLY GOOD` as separate evidence boundaries.
+- Advanced the render-evidence receipt schema to `axm.morphtile.surface-render-evidence/v0.3`; creation-machine version remains `0.5.1` because no creation vocabulary/runtime semantics changed.
+
 ## 0.5.1 — 2026-09-20
 
 - Repaired `axis_gradient` endpoint clamping after independent Verification proved that algebraic interpolation at `t=1` could produce IEEE values such as `0.09999999999999998` for an authored endpoint of `0.1`.
