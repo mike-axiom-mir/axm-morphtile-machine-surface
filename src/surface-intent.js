@@ -71,6 +71,9 @@ function snapshotSurfaceIntent(intent) {
     if (!("value" in descriptor)) {
       nonportableIntent("intent." + name, "uses an accessor instead of portable authored data");
     }
+    if (descriptor.value === undefined) {
+      nonportableIntent("intent." + name, "is explicitly undefined and portable authored data would drop it as if omitted");
+    }
     defineAuthoredDataProperty(out, name, descriptor.value);
   }
 
