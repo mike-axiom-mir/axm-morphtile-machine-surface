@@ -38,7 +38,13 @@ function rgb(value, field) {
   return value.slice();
 }
 
-function assertFinitePaintNumbers(value, path) {
+function nonportablePaint(path, detail) {
+  throw new SurfaceIntentError("HOLD_SURFACE_PAINT_NONPORTABLE_VALUE", path + " " + detail);
+}
+
+function clonePortablePaintValue(value, path, stack = new Set()) {
+  if (value === null || typeof value === "string" || typeof value === "boolean") return value;
+
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
       throw new SurfaceIntentError(
@@ -46,16 +52,74 @@ function assertFinitePaintNumbers(value, path) {
         path + " contains a non-finite number that cannot be preserved through the portable envelope"
       );
     }
-    return;
+    return value;
   }
-  if (Array.isArray(value)) {
-    value.forEach((item, index) => assertFinitePaintNumbers(item, path + "[" + index + "]"));
-    return;
+
+  if (value === undefined || typeof value === "function" || typeof value === "symbol" || typeof value === "bigint") {
+    nonportablePaint(path, "contains a value type that portable JSON would rewrite, drop, or reject");
   }
-  if (isPlainObject(value)) {
-    for (const [key, item] of Object.entries(value)) {
-      assertFinitePaintNumbers(item, path + "." + key);
+
+  if (typeof value !== "object") {
+    nonportablePaint(path, "contains an unsupported portable value");
+  }
+
+  if (stack.has(value)) {
+    nonportablePaint(path, "contains a cycle that portable JSON cannot represent");
+  }
+  stack.add(value);
+
+  try {
+    if (Array.isArray(value)) {
+      const ownNames = Object.getOwnPropertyNames(value);
+      const unexpected = ownNames.filter((name) => {
+        if (name === "length") return false;
+        if (!/^(0|[1-9][0-9]*)$/.test(name)) return true;
+        return Number(name) >= value.length;
+      });
+      if (unexpected.length) {
+        nonportablePaint(path, "contains array properties portable JSON would not preserve: " + unexpected.sort().join(", "));
+      }
+      if (Object.getOwnPropertySymbols(value).length) {
+        nonportablePaint(path, "contains symbol-keyed array properties portable JSON would drop");
+      }
+
+      const out = [];
+      for (let index = 0; index < value.length; index += 1) {
+        if (!Object.prototype.hasOwnProperty.call(value, index)) {
+          nonportablePaint(path + "[" + index + "]", "is a sparse array slot that portable JSON would rewrite to null");
+        }
+        const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+        if (!descriptor || !("value" in descriptor)) {
+          nonportablePaint(path + "[" + index + "]", "uses an accessor instead of portable authored data");
+        }
+        out.push(clonePortablePaintValue(descriptor.value, path + "[" + index + "]", stack));
+      }
+      return out;
     }
+
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) {
+      nonportablePaint(path, "uses a non-plain object that portable JSON would reinterpret");
+    }
+    if (Object.getOwnPropertySymbols(value).length) {
+      nonportablePaint(path, "contains symbol-keyed properties portable JSON would drop");
+    }
+
+    const descriptors = Object.getOwnPropertyDescriptors(value);
+    const out = {};
+    for (const name of Object.getOwnPropertyNames(value)) {
+      const descriptor = descriptors[name];
+      if (!descriptor.enumerable) {
+        nonportablePaint(path + "." + name, "is non-enumerable and would not survive portable JSON unchanged");
+      }
+      if (!("value" in descriptor)) {
+        nonportablePaint(path + "." + name, "uses an accessor instead of portable authored data");
+      }
+      out[name] = clonePortablePaintValue(descriptor.value, path + "." + name, stack);
+    }
+    return out;
+  } finally {
+    stack.delete(value);
   }
 }
 
@@ -67,7 +131,6 @@ function normalizePaint(paint) {
   if (!Array.isArray(paint.color) || paint.color.length !== 3) {
     throw new SurfaceIntentError("HOLD_SURFACE_PAINT_INVALID", "paint.color must contain exactly three channel expressions");
   }
-  assertFinitePaintNumbers(paint.color, "paint.color");
   if (paint.vars !== undefined) {
     if (!isPlainObject(paint.vars)) {
       throw new SurfaceIntentError("HOLD_SURFACE_PAINT_VARS_INVALID", "paint.vars must be an object when supplied");
@@ -80,7 +143,7 @@ function normalizePaint(paint) {
       throw new SurfaceIntentError("HOLD_SURFACE_PAINT_VARS_INVALID", "paint.vars values must be finite numbers: " + bad.join(", "));
     }
   }
-  return JSON.parse(JSON.stringify(paint));
+  return clonePortablePaintValue(paint, "paint");
 }
 
 function normalizeSurfaceIntent(intent) {
@@ -110,4 +173,12 @@ function normalizeSurfaceIntent(intent) {
   return out;
 }
 
-module.exports = { INTENT_FIELDS, PAINT_FIELDS, SurfaceIntentError, normalizePaint, normalizeSurfaceIntent, rgb };
+module.exports = {
+  INTENT_FIELDS,
+  PAINT_FIELDS,
+  SurfaceIntentError,
+  clonePortablePaintValue,
+  normalizePaint,
+  normalizeSurfaceIntent,
+  rgb
+};
