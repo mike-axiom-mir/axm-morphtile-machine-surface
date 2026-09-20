@@ -31,6 +31,18 @@ function requestFor(direction) {
   };
 }
 
+function materialRequest(id, pattern) {
+  const intent = { base_color: [0.2, 0.25, 0.3] };
+  if (pattern) intent.pattern = pattern;
+  return {
+    envelope_version: "0.1",
+    request_id: id,
+    goal: "Exercise bounded material pattern semantics in MorphTile",
+    intent,
+    provenance: { caller: "runtime-conformance" }
+  };
+}
+
 function sameColor(actual, expected) {
   return Array.isArray(actual) && actual.length === expected.length && actual.every((value, index) => value === expected[index]);
 }
@@ -52,6 +64,21 @@ function compileCandidate(MorphTile, result, name) {
   assert.equal(compiled.P.length, 108 * 9, `${name}: pinned box position receipt drifted`);
   assert.equal(compiled.K.length, 108, `${name}: material receipt length drifted`);
   return compiled;
+}
+
+function assertPatternFactors(patterned, baseline, factor, name) {
+  assert.deepEqual(patterned.P, baseline.P, `${name}: pattern must not rewrite geometry positions`);
+  assert.deepEqual(patterned.K, baseline.K, `${name}: pattern must not rewrite procedural paint colors`);
+
+  let attenuated = 0;
+  let unchanged = 0;
+  for (let i = 0; i < baseline.T.length; i++) {
+    if (patterned.T[i] === baseline.T[i]) unchanged += 1;
+    else if (patterned.T[i] === baseline.T[i] * factor) attenuated += 1;
+    else assert.fail(`${name}: triangle ${i} changed by an undeclared factor`);
+  }
+  assert.ok(attenuated > 0, `${name}: runtime never applied the attenuation factor`);
+  assert.ok(unchanged > 0, `${name}: runtime never preserved the complementary cells`);
 }
 
 integrationTest("pinned MorphTile runtime executes every named facing rule with stable surface receipts", () => {
@@ -88,4 +115,24 @@ integrationTest("pinned MorphTile runtime executes the caller-paint fixture inst
 
   assert.equal(upward, 18, "caller paint: expected one upward-facing box face");
   assert.equal(other, 90, "caller paint: expected remaining five faces to use the fallback channel value");
+});
+
+integrationTest("pinned MorphTile runtime executes checker and stripes as bounded orthogonal material patterns", () => {
+  assert.equal(runtimeCommit, manifest.tested_against.commit, "CI runtime must match machine.json pin");
+  const MorphTile = require(path.resolve(runtimePath));
+  const baseline = compileCandidate(MorphTile, run(materialRequest("surface-pattern-baseline")), "surface pattern baseline");
+
+  const checker = compileCandidate(
+    MorphTile,
+    run(materialRequest("surface-pattern-checker", { kind: "checker", scale: 0.4 })),
+    "surface runtime checker"
+  );
+  assertPatternFactors(checker, baseline, 0.62, "checker");
+
+  const stripes = compileCandidate(
+    MorphTile,
+    run(materialRequest("surface-pattern-stripes", { kind: "stripes", scale: 0.4 })),
+    "surface runtime stripes"
+  );
+  assertPatternFactors(stripes, baseline, 0.55, "stripes");
 });
