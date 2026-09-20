@@ -23,8 +23,29 @@ function requestFor(direction) {
   };
 }
 
-test("machine v0.4 compiles six named facing directions into MorphTile normal variables", () => {
-  assert.equal(MACHINE.version, "0.4.0");
+function gradientRequest(overrides = {}) {
+  return {
+    envelope_version: "0.1",
+    request_id: "surface-axis-gradient",
+    goal: "Create a bounded deterministic vertical surface gradient",
+    intent: {
+      base_color: [0.2, 0.25, 0.3],
+      surface_rule: {
+        kind: "axis_gradient",
+        axis: "y",
+        from: -0.5,
+        to: 0.5,
+        start_color: [0.1, 0.2, 0.3],
+        end_color: [0.9, 0.8, 0.7],
+        ...overrides
+      }
+    },
+    provenance: { caller: "surface-rules-test" }
+  };
+}
+
+test("machine v0.5 compiles six named facing directions into MorphTile normal variables", () => {
+  assert.equal(MACHINE.version, "0.5.0");
   for (const [direction, normalExpr] of Object.entries(NORMAL_EXPR)) {
     const out = run(requestFor(direction));
     assert.equal(out.status, "CANDIDATE", direction);
@@ -39,6 +60,44 @@ test("machine v0.4 compiles six named facing directions into MorphTile normal va
       else_color: [0.25, 0.3, 0.4]
     });
   }
+});
+
+test("axis_gradient compiles bounded position-based interpolation without mutating intent", () => {
+  const request = gradientRequest();
+  const before = JSON.stringify(request);
+  const out = run(request);
+  assert.equal(out.status, "CANDIDATE");
+  assert.equal(JSON.stringify(request), before);
+  assert.deepEqual(out.evidence[0].rule, {
+    kind: "axis_gradient",
+    axis: "y",
+    from: -0.5,
+    to: 0.5,
+    start_color: [0.1, 0.2, 0.3],
+    end_color: [0.9, 0.8, 0.7]
+  });
+  assert.deepEqual(out.candidate.value.data.paint.color[0], [
+    "+",
+    0.1,
+    ["*", 0.8, ["min", 1, ["max", 0, ["/", ["-", ["var", "y"], -0.5], 1]]]]
+  ]);
+  assert.deepEqual(run(request), out);
+});
+
+test("axis_gradient fails closed on unknown axes, malformed ranges, unknown fields and numeric lookalikes", () => {
+  assert.equal(run(gradientRequest({ axis: "ny" })).holds[0].code, "HOLD_SURFACE_RULE_AXIS_UNKNOWN");
+  assert.equal(run(gradientRequest({ to: -0.5 })).holds[0].code, "HOLD_SURFACE_RULE_RANGE_INVALID");
+  assert.equal(run(gradientRequest({ from: "-0.5" })).holds[0].code, "HOLD_SURFACE_RULE_RANGE_INVALID");
+  assert.equal(run(gradientRequest({ to: false })).holds[0].code, "HOLD_SURFACE_RULE_RANGE_INVALID");
+
+  const unknown = gradientRequest({ typo_axis: "y" });
+  const unknownOut = run(unknown);
+  assert.equal(unknownOut.status, "HOLD");
+  assert.equal(unknownOut.holds[0].code, "HOLD_SURFACE_RULE_FIELD_UNKNOWN");
+  assert.match(unknownOut.holds[0].detail, /typo_axis/);
+
+  const color = gradientRequest({ end_color: [1, "0.8", 0.7] });
+  assert.equal(run(color).holds[0].code, "HOLD_SURFACE_RULE_COLOR_INVALID");
 });
 
 test("facing-rule compilation is deterministic and does not mutate the request", () => {

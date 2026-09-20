@@ -14,6 +14,8 @@ const integrationTest = runtimePath ? test : test.skip;
 const DIRECTIONS = ["up", "down", "left", "right", "forward", "back"];
 const MATCH = [0.9, 0.55, 0.2];
 const OTHERWISE = [0.25, 0.3, 0.4];
+const GRADIENT_START = [0.1, 0.2, 0.3];
+const GRADIENT_END = [0.9, 0.8, 0.7];
 
 function requestFor(direction) {
   return {
@@ -39,6 +41,26 @@ function materialRequest(id, pattern) {
     request_id: id,
     goal: "Exercise bounded material pattern semantics in MorphTile",
     intent,
+    provenance: { caller: "runtime-conformance" }
+  };
+}
+
+function gradientRequest(axis = "y") {
+  return {
+    envelope_version: "0.1",
+    request_id: `runtime-axis-gradient-${axis}`,
+    goal: "Exercise bounded axis gradient semantics in MorphTile",
+    intent: {
+      base_color: [0.2, 0.25, 0.3],
+      surface_rule: {
+        kind: "axis_gradient",
+        axis,
+        from: -0.5,
+        to: 0.5,
+        start_color: GRADIENT_START,
+        end_color: GRADIENT_END
+      }
+    },
     provenance: { caller: "runtime-conformance" }
   };
 }
@@ -97,6 +119,32 @@ integrationTest("pinned MorphTile runtime executes every named facing rule with 
 
     assert.equal(matched, 18, `${direction}: expected exactly one box face to match`);
     assert.equal(otherwise, 90, `${direction}: expected the other five box faces to use else_color`);
+  }
+});
+
+integrationTest("pinned MorphTile runtime executes axis gradients as clamped position-based paint", () => {
+  assert.equal(runtimeCommit, manifest.tested_against.commit, "CI runtime must match machine.json pin");
+  const MorphTile = require(path.resolve(runtimePath));
+  const baseline = compileCandidate(MorphTile, run(materialRequest("surface-gradient-baseline")), "surface gradient baseline");
+
+  for (const axis of ["x", "y", "z"]) {
+    const compiled = compileCandidate(MorphTile, run(gradientRequest(axis)), `surface runtime axis gradient ${axis}`);
+    assert.deepEqual(compiled.P, baseline.P, `${axis}: gradient must not rewrite geometry positions`);
+    assert.deepEqual(compiled.T, baseline.T, `${axis}: gradient must not rewrite base triangle material colors`);
+
+    const unique = new Set(compiled.K.map((color) => JSON.stringify(color)));
+    assert.ok(unique.size >= 3, `${axis}: expected gradient to produce multiple position-dependent paint colors`);
+    assert.ok(compiled.K.some((color) => sameColor(color, GRADIENT_START)), `${axis}: expected clamped start color`);
+    assert.ok(compiled.K.some((color) => sameColor(color, GRADIENT_END)), `${axis}: expected clamped end color`);
+
+    for (const color of compiled.K) {
+      assert.equal(color.length, 3, `${axis}: paint receipt must remain RGB`);
+      for (let i = 0; i < 3; i++) {
+        const low = Math.min(GRADIENT_START[i], GRADIENT_END[i]);
+        const high = Math.max(GRADIENT_START[i], GRADIENT_END[i]);
+        assert.ok(Number.isFinite(color[i]) && color[i] >= low && color[i] <= high, `${axis}: gradient channel escaped declared bounds`);
+      }
+    }
   }
 });
 

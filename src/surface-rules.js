@@ -8,8 +8,10 @@ const DIRECTIONS = Object.freeze({
   forward: Object.freeze({ variable: "nz", sign: 1 }),
   back: Object.freeze({ variable: "nz", sign: -1 })
 });
+const GRADIENT_AXES = Object.freeze(["x", "y", "z"]);
 
 const FACING_FIELDS = Object.freeze(["kind", "direction", "threshold", "match_color", "else_color"]);
+const AXIS_GRADIENT_FIELDS = Object.freeze(["kind", "axis", "from", "to", "start_color", "end_color"]);
 
 class SurfaceRuleError extends Error {
   constructor(code, message) {
@@ -27,6 +29,13 @@ function assertOnlyFields(rule, allowed) {
       "unknown surface_rule field" + (unknown.length === 1 ? ": " : "s: ") + unknown.join(", ")
     );
   }
+}
+
+function authoredFiniteNumber(value, code, message) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new SurfaceRuleError(code, message);
+  }
+  return value;
 }
 
 function rgb(value, field) {
@@ -72,12 +81,59 @@ function compileFacing(rule) {
   };
 }
 
+function compileAxisGradient(rule) {
+  assertOnlyFields(rule, AXIS_GRADIENT_FIELDS);
+  if (!GRADIENT_AXES.includes(rule.axis)) {
+    throw new SurfaceRuleError(
+      "HOLD_SURFACE_RULE_AXIS_UNKNOWN",
+      "axis_gradient axis must be one of: " + GRADIENT_AXES.join(", ")
+    );
+  }
+
+  const from = authoredFiniteNumber(
+    rule.from,
+    "HOLD_SURFACE_RULE_RANGE_INVALID",
+    "axis_gradient from must be authored as a finite number"
+  );
+  const to = authoredFiniteNumber(
+    rule.to,
+    "HOLD_SURFACE_RULE_RANGE_INVALID",
+    "axis_gradient to must be authored as a finite number"
+  );
+  if (to <= from) {
+    throw new SurfaceRuleError("HOLD_SURFACE_RULE_RANGE_INVALID", "axis_gradient to must be greater than from");
+  }
+
+  const start = rgb(rule.start_color, "start_color");
+  const end = rgb(rule.end_color, "end_color");
+  const span = to - from;
+  const t = ["min", 1, ["max", 0, ["/", ["-", ["var", rule.axis], from], span]]];
+  const color = start.map((channel, index) => [
+    "+",
+    channel,
+    ["*", end[index] - channel, JSON.parse(JSON.stringify(t))]
+  ]);
+
+  return {
+    normalized: {
+      kind: "axis_gradient",
+      axis: rule.axis,
+      from,
+      to,
+      start_color: start,
+      end_color: end
+    },
+    paint: { color }
+  };
+}
+
 function compileSurfaceRule(rule) {
   if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
     throw new SurfaceRuleError("HOLD_SURFACE_RULE_INVALID", "surface_rule must be an object");
   }
   if (rule.kind === "facing") return compileFacing(rule);
+  if (rule.kind === "axis_gradient") return compileAxisGradient(rule);
   throw new SurfaceRuleError("HOLD_SURFACE_RULE_KIND_UNKNOWN", "unknown surface rule kind: " + String(rule.kind));
 }
 
-module.exports = { DIRECTIONS, SurfaceRuleError, compileSurfaceRule };
+module.exports = { DIRECTIONS, GRADIENT_AXES, SurfaceRuleError, compileSurfaceRule };

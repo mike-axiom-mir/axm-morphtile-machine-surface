@@ -14,8 +14,8 @@ function requestWith(pattern) {
   return request;
 }
 
-test("machine v0.4 compiles the two MorphTile-backed named material patterns", () => {
-  assert.equal(MACHINE.version, "0.4.0");
+test("machine v0.5 preserves the two MorphTile-backed named material patterns", () => {
+  assert.equal(MACHINE.version, "0.5.0");
 
   for (const kind of ["checker", "stripes"]) {
     const request = requestWith({ kind, scale: 0.4 });

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — 2026-09-20
+
+- Added bounded `axis_gradient` surface vocabulary over MorphTile's existing per-triangle `x`, `y`, and `z` paint variables.
+- Gradient rules require an explicit `x|y|z` axis, finite authored `from`/`to` values with `to > from`, and strict RGB endpoint colors; numeric-looking strings, booleans, null, unknown fields and malformed ranges fail closed.
+- Compiles gradients to deterministic clamped MorphTile expression trees: below-range matter uses `start_color`, above-range matter uses `end_color`, and only the declared interval interpolates.
+- Added exact pinned-runtime receipts for all three axes through real `createTile → validateTile → compileMesh`, proving geometry/base triangle material identity is unchanged while procedural paint stays within the declared endpoint bounds and produces multiple position-dependent colors.
+- Added a reusable axis-gradient request fixture and advanced machine/package metadata to `0.5.0`.
+- Kept axis gradients in Surface Machine because MorphTile already has the universal position-aware paint substrate; no new core primitive was required.
+- Preserved TECHNICALLY VALID vs VISUALLY GOOD as separate evidence classes; rendered/aesthetic proof remains separate.
+
 ## 0.4.0 — 2026-09-20
 
 - Added a bounded creation-side material pattern vocabulary for MorphTile's existing `checker` and `stripes` runtime semantics.
