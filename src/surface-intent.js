@@ -38,6 +38,36 @@ function rgb(value, field) {
   return value.slice();
 }
 
+function nonportableIntent(path, detail) {
+  throw new SurfaceIntentError("HOLD_SURFACE_INTENT_NONPORTABLE_VALUE", path + " " + detail);
+}
+
+function snapshotSurfaceIntent(intent) {
+  const prototype = Object.getPrototypeOf(intent);
+  if (prototype !== Object.prototype && prototype !== null) {
+    nonportableIntent("intent", "uses a non-plain object instead of portable authored data");
+  }
+  if (Object.getOwnPropertySymbols(intent).length) {
+    nonportableIntent("intent", "contains symbol-keyed properties portable authored data cannot preserve");
+  }
+
+  const descriptors = Object.getOwnPropertyDescriptors(intent);
+  const out = {};
+  for (const name of Object.getOwnPropertyNames(intent)) {
+    const descriptor = descriptors[name];
+    if (!descriptor.enumerable) {
+      nonportableIntent("intent." + name, "is non-enumerable and cannot survive the portable authored-data boundary unchanged");
+    }
+    if (!("value" in descriptor)) {
+      nonportableIntent("intent." + name, "uses an accessor instead of portable authored data");
+    }
+    out[name] = descriptor.value;
+  }
+
+  assertOnlyFields(out, INTENT_FIELDS, "HOLD_SURFACE_INTENT_FIELD_UNKNOWN", "intent");
+  return out;
+}
+
 function nonportablePaint(path, detail) {
   throw new SurfaceIntentError("HOLD_SURFACE_PAINT_NONPORTABLE_VALUE", path + " " + detail);
 }
@@ -157,24 +187,28 @@ function normalizeSurfaceIntent(intent) {
   if (!isPlainObject(intent)) {
     throw new SurfaceIntentError("HOLD_SURFACE_INTENT_INVALID", "intent must be an object");
   }
-  assertOnlyFields(intent, INTENT_FIELDS, "HOLD_SURFACE_INTENT_FIELD_UNKNOWN", "intent");
+
+  // Establish the caller-owned intent descriptor boundary before reading any
+  // authored intent field. A HOLD is not source-safe if an accessor already ran
+  // while deciding to reject the request.
+  const authoredIntent = snapshotSurfaceIntent(intent);
 
   const out = {};
-  if (intent.base_color !== undefined) out.base_color = rgb(intent.base_color, "base_color");
-  if (intent.paint !== undefined) out.paint = normalizePaint(intent.paint);
+  if (authoredIntent.base_color !== undefined) out.base_color = rgb(authoredIntent.base_color, "base_color");
+  if (authoredIntent.paint !== undefined) out.paint = normalizePaint(authoredIntent.paint);
 
   // Rule and pattern semantics are validated by their domain compilers. Keep the
   // authored values intact until those validators run: JSON serialization may
   // invoke caller-controlled toJSON hooks or rewrite non-finite values before
   // the machine has decided whether the authored request is valid.
-  if (intent.surface_rule !== undefined) out.surface_rule = intent.surface_rule;
-  if (intent.pattern !== undefined) out.pattern = intent.pattern;
+  if (authoredIntent.surface_rule !== undefined) out.surface_rule = authoredIntent.surface_rule;
+  if (authoredIntent.pattern !== undefined) out.pattern = authoredIntent.pattern;
 
-  if (intent.external_dependency !== undefined) {
-    if (typeof intent.external_dependency !== "string" || !intent.external_dependency.trim()) {
+  if (authoredIntent.external_dependency !== undefined) {
+    if (typeof authoredIntent.external_dependency !== "string" || !authoredIntent.external_dependency.trim()) {
       throw new SurfaceIntentError("HOLD_SURFACE_DEPENDENCY_INVALID", "external_dependency must be a non-empty string");
     }
-    out.external_dependency = intent.external_dependency;
+    out.external_dependency = authoredIntent.external_dependency;
   }
   return out;
 }
@@ -186,5 +220,6 @@ module.exports = {
   clonePortablePaintValue,
   normalizePaint,
   normalizeSurfaceIntent,
-  rgb
+  rgb,
+  snapshotSurfaceIntent
 };
