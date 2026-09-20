@@ -2,6 +2,8 @@
 
 ## 0.3.0 — 2026-09-20
 
+- Director review additionally repaired explicit falsey `surface_rule` values: only omission selects default paint; authored invalid rules HOLD. Eighteen tests and the independent Verification boundary check pass after this repair.
+
 - Added a fail-closed top-level surface intent contract so unsupported or misspelled fields cannot be silently ignored.
 - Bounded `base_color`, caller `paint` shape, numeric paint vars, and external dependency names before candidate emission.
 - Repaired authored numeric handling after independent Verification exposed semantic coercion: numeric-looking strings, booleans and null now HOLD instead of being passed through `Number(...)`.

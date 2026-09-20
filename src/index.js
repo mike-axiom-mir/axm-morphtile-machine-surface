@@ -31,7 +31,7 @@ function run(request) {
     });
   }
 
-  if (intent.paint && intent.surface_rule) {
+  if (intent.paint && intent.surface_rule !== undefined) {
     return hold(
       request,
       new SurfaceRuleError("HOLD_SURFACE_RULE_CONFLICT", "paint and surface_rule cannot both author the same material candidate"),
@@ -41,7 +41,7 @@ function run(request) {
 
   let paint = intent.paint;
   let normalizedRule = null;
-  if (intent.surface_rule) {
+  if (intent.surface_rule !== undefined) {
     try {
       const compiled = compileSurfaceRule(intent.surface_rule);
       paint = compiled.paint;

@@ -93,3 +93,23 @@ test("external dependency must be an explicit non-empty capability name", () => 
   assert.equal(out.status, "HOLD");
   assert.equal(out.holds[0].code, "HOLD_SURFACE_DEPENDENCY_INVALID");
 });
+
+test("an authored falsey surface rule is rejected instead of replaced by default paint", () => {
+  for (const surface_rule of [false, null, 0, "", [], {}]) {
+    const request = { ...clone(rawFixture), request_id: "surface-explicit-invalid-rule", intent: { surface_rule } };
+    const before = JSON.stringify(request);
+    const out = run(request);
+    assert.equal(out.status, "HOLD", JSON.stringify(surface_rule));
+    assert.equal(out.candidate, null);
+    assert.match(out.holds[0].code, /^HOLD_SURFACE_RULE_/);
+    assert.equal(JSON.stringify(request), before);
+  }
+  const omitted = { ...clone(rawFixture), intent: {} };
+  assert.equal(run(omitted).status, "CANDIDATE", "only omission requests default paint");
+});
+
+test("paint and an explicitly authored rule cannot silently compete for the same surface", () => {
+  const request = clone(rawFixture);
+  request.intent.surface_rule = false;
+  assert.equal(run(request).holds[0].code, "HOLD_SURFACE_RULE_CONFLICT");
+});

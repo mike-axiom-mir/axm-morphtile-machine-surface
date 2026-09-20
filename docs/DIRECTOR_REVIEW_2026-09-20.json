@@ -1,0 +1,94 @@
+{
+  "date": "2026-09-20",
+  "reviewed_candidate": "5e831c968cb28d6445fb878e068c63115e0b1de7",
+  "verifier_commit": "604ee415707c8d41ec9846da8b02aee46540bf60",
+  "runtime_commit": "a579182ae585e5722ac87dd0cc8209963b18d000",
+  "repair": "Explicit falsey surface_rule must HOLD instead of silently emitting default paint.",
+  "tests": {
+    "command": "npm test with pinned MORPHTILE_CORE_PATH and MORPHTILE_COMMIT",
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0
+  },
+  "independent_boundary": {
+    "status": "PASS",
+    "checked": [
+      "machine-version",
+      "valid-request-and-immutability",
+      "unknown-top-level-field-fail-closed",
+      "paint-vars-strict-number-type",
+      "base-color-strict-number-type",
+      "base-color-range",
+      "surface-rule-strict-number-types"
+    ],
+    "errors": [],
+    "receipt": {
+      "schema": "axm.morphtile.surface-intent-conformance-receipt/v0.2",
+      "expected_machine_version": "0.3.0",
+      "observed_machine_version": "0.3.0",
+      "valid_status": "CANDIDATE",
+      "unknown_field_status": "HOLD",
+      "unknown_field_code": "HOLD_SURFACE_INTENT_FIELD_UNKNOWN",
+      "paint_var_string_status": "HOLD",
+      "paint_var_string_code": "HOLD_SURFACE_PAINT_VARS_INVALID",
+      "base_color_type_cases": [
+        {
+          "id": "string",
+          "input": [
+            "0.2",
+            0.25,
+            0.3
+          ],
+          "status": "HOLD",
+          "hold_code": "HOLD_SURFACE_COLOR_INVALID",
+          "emitted_color": null,
+          "mutated": false
+        },
+        {
+          "id": "boolean",
+          "input": [
+            false,
+            0.25,
+            0.3
+          ],
+          "status": "HOLD",
+          "hold_code": "HOLD_SURFACE_COLOR_INVALID",
+          "emitted_color": null,
+          "mutated": false
+        },
+        {
+          "id": "null",
+          "input": [
+            null,
+            0.25,
+            0.3
+          ],
+          "status": "HOLD",
+          "hold_code": "HOLD_SURFACE_COLOR_INVALID",
+          "emitted_color": null,
+          "mutated": false
+        }
+      ],
+      "out_of_range_status": "HOLD",
+      "out_of_range_code": "HOLD_SURFACE_COLOR_INVALID",
+      "valid_surface_rule_status": "CANDIDATE",
+      "surface_rule_type_cases": [
+        {
+          "id": "threshold-string",
+          "status": "HOLD",
+          "hold_code": "HOLD_SURFACE_RULE_THRESHOLD_INVALID",
+          "normalized_rule": null,
+          "mutated": false
+        },
+        {
+          "id": "match-color-null",
+          "status": "HOLD",
+          "hold_code": "HOLD_SURFACE_RULE_COLOR_INVALID",
+          "normalized_rule": null,
+          "mutated": false
+        }
+      ]
+    }
+  },
+  "visual_observer_executed": false
+}
