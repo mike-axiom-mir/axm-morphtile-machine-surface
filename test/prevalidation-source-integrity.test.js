@@ -298,3 +298,33 @@ test("caller paint rejects values that JSON would silently rewrite to null", () 
   assert.equal(out.candidate, null);
   assert.equal(request.intent.paint.color[0][2], undefined);
 });
+
+test("caller paint rejects signed negative zero before JSON transport erases its sign", () => {
+  const expression = ["/", 1, -0];
+  const request = requestWithPaint(expression, "surface-paint-negative-zero-source-integrity");
+
+  assert.equal(Object.is(request.intent.paint.color[0][2], -0), true, "fixture must preserve authored negative zero");
+
+  const out = run(request);
+
+  assert.equal(out.status, "HOLD");
+  assert.equal(out.holds[0].code, "HOLD_SURFACE_PAINT_NONPORTABLE_VALUE");
+  assert.match(out.holds[0].detail, /paint\.color\[0\]\[2\].*negative zero/i);
+  assert.equal(out.candidate, null);
+  assert.equal(Object.is(request.intent.paint.color[0][2], -0), true, "Surface must not mutate caller-authored sign");
+});
+
+test("caller paint vars reject signed negative zero before portable envelope cloning", () => {
+  const request = requestWithPaint(["var", "bias"], "surface-paint-var-negative-zero-source-integrity");
+  request.intent.paint.vars.bias = -0;
+
+  assert.equal(Object.is(request.intent.paint.vars.bias, -0), true, "fixture must preserve authored negative zero");
+
+  const out = run(request);
+
+  assert.equal(out.status, "HOLD");
+  assert.equal(out.holds[0].code, "HOLD_SURFACE_PAINT_NONPORTABLE_VALUE");
+  assert.match(out.holds[0].detail, /paint\.vars\.bias.*negative zero/i);
+  assert.equal(out.candidate, null);
+  assert.equal(Object.is(request.intent.paint.vars.bias, -0), true, "Surface must not mutate caller-authored sign");
+});
