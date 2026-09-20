@@ -3,7 +3,7 @@
 Tested contract target:
 
 - repository: mike-axiom-mir/axm-morphtile
-- commit: 59ae96ef5394ca4b68441aa7da6e1c4084c48673
+- commit: a579182ae585e5722ac87dd0cc8209963b18d000
 - format: v0.4
 - provisional envelope: v0.1
 - fixture set: v0.3
@@ -18,7 +18,9 @@ The runtime suite passes all six named facing-rule candidates through real Morph
 
 The suite also executes the existing caller-authored raw-paint fixture in the same runtime. Surface Machine validates the bounded paint envelope, but MorphTile execution supplies the semantic evidence: the default box must produce exactly one upward face with the authored match channel values and five faces with the fallback values.
 
-The compatibility pin advances from `4346df01ed18cd1336064f9323d7766ff4f6338a` to `59ae96ef5394ca4b68441aa7da6e1c4084c48673`. The newer snapshot is three commits ahead and includes real core changes, so compatibility is earned by replaying the semantic receipts rather than inferred from source similarity.
+Authored numeric-looking values are validated before normalization. Surface Machine must not reinterpret strings, booleans, or null through numeric coercion when the authoring contract requires a number.
+
+The compatibility pin advances from `59ae96ef5394ca4b68441aa7da6e1c4084c48673` to `a579182ae585e5722ac87dd0cc8209963b18d000`. Compatibility is earned by replaying the semantic receipts rather than inferred from source similarity.
 
 This checkout is test infrastructure only. Surface Machine does not vendor MorphTile or add a runtime dependency on the repository.
 
