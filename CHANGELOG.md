@@ -4,9 +4,11 @@
 
 - Added a fail-closed top-level surface intent contract so unsupported or misspelled fields cannot be silently ignored.
 - Bounded `base_color`, caller `paint` shape, numeric paint vars, and external dependency names before candidate emission.
+- Repaired authored numeric handling after independent Verification exposed semantic coercion: numeric-looking strings, booleans and null now HOLD instead of being passed through `Number(...)`.
+- Applied the same strict authored-number rule to named facing thresholds and colors.
 - Kept caller-authored paint expressions available while explicitly warning that expression semantics belong to the MorphTile runtime.
 - Extended exact runtime conformance to execute the existing caller-paint fixture as well as all six named facing rules.
-- Advanced the exact MorphTile compatibility target to `59ae96ef5394ca4b68441aa7da6e1c4084c48673`; compatibility is earned by replay, not inference.
+- Advanced the exact MorphTile compatibility target to `a579182ae585e5722ac87dd0cc8209963b18d000`; compatibility is earned by replay, not inference.
 - Preserved TECHNICALLY VALID vs VISUALLY GOOD as separate evidence classes.
 
 ## 0.2.0 — 2026-09-20
