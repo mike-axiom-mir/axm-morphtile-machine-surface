@@ -1,5 +1,7 @@
 "use strict";
 
+const { types: utilTypes } = require("node:util");
+
 const INTENT_FIELDS = Object.freeze(["base_color", "paint", "surface_rule", "pattern", "external_dependency"]);
 const PAINT_FIELDS = Object.freeze(["color", "vars"]);
 
@@ -43,6 +45,13 @@ function nonportableIntent(path, detail) {
 }
 
 function snapshotSurfaceIntent(intent) {
+  // Node's util.types.isProxy does not invoke Proxy traps and also identifies
+  // revoked Proxies. It therefore has to run before Array.isArray,
+  // getPrototypeOf, own-key enumeration, or descriptor inspection.
+  if (utilTypes.isProxy(intent)) {
+    nonportableIntent("intent", "uses a Proxy instead of portable authored data");
+  }
+
   const prototype = Object.getPrototypeOf(intent);
   if (prototype !== Object.prototype && prototype !== null) {
     nonportableIntent("intent", "uses a non-plain object instead of portable authored data");
@@ -91,6 +100,13 @@ function clonePortablePaintValue(value, path, stack = new Set()) {
 
   if (typeof value !== "object") {
     nonportablePaint(path, "contains an unsupported portable value");
+  }
+
+  // Proxy detection is itself non-reflective. Run it before every operation
+  // below that could execute caller-controlled traps or throw on a revoked
+  // Proxy. This also protects Proxies nested deeper inside paint expressions.
+  if (utilTypes.isProxy(value)) {
+    nonportablePaint(path, "uses a Proxy instead of portable authored data");
   }
 
   if (stack.has(value)) {
@@ -154,6 +170,12 @@ function clonePortablePaintValue(value, path, stack = new Set()) {
 }
 
 function normalizePaint(paint) {
+  // Guard the caller-owned paint root before isPlainObject() reaches
+  // Array.isArray(), which throws on revoked Proxies and can otherwise cross a
+  // source-integrity boundary before Surface has decided admissibility.
+  if (utilTypes.isProxy(paint)) {
+    nonportablePaint("paint", "uses a Proxy instead of portable authored data");
+  }
   if (!isPlainObject(paint)) {
     throw new SurfaceIntentError("HOLD_SURFACE_PAINT_INVALID", "paint must be an object");
   }
@@ -184,6 +206,12 @@ function normalizePaint(paint) {
 
 function normalizeSurfaceIntent(intent) {
   if (intent === undefined || intent === null) return {};
+  // Detect live or revoked Proxies before isPlainObject() calls Array.isArray.
+  // A later HOLD is not source-safe if reflective preflight already executed a
+  // caller-controlled trap or threw on a revoked Proxy.
+  if (utilTypes.isProxy(intent)) {
+    nonportableIntent("intent", "uses a Proxy instead of portable authored data");
+  }
   if (!isPlainObject(intent)) {
     throw new SurfaceIntentError("HOLD_SURFACE_INTENT_INVALID", "intent must be an object");
   }
