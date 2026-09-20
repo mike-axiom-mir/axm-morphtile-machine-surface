@@ -39,10 +39,10 @@ Node 18 or later; zero runtime dependencies; no secrets or network required.
 ## Truth boundary
 
 - IMPLEMENTED: the tiny adapter, local envelope, and six-direction `facing` rule compiler.
-- TESTED: the claims named by the local test files.
+- TESTED: the claims named by the local test files, including exact cross-repository runtime conformance when `MORPHTILE_CORE_PATH` is supplied by CI.
 - EXPERIMENTAL: envelope v0.1, surface-rule vocabulary v0.1, and every candidate schema in this foundation.
-- COMPATIBILITY TARGET: MorphTile v0.4 commit `13d83a2b2c0d12644442d3d9e45bcbe0af19876a`, whose paint context exposes `nx`, `ny`, and `nz`.
-- SOURCE-INSPECTED ONLY: newer MorphTile main still exposes those variables, but this machine pass does not promote that inspection into fresh cross-repo runtime proof.
+- COMPATIBILITY TARGET: exact MorphTile v0.4 snapshot `4346df01ed18cd1336064f9323d7766ff4f6338a`, current main when this candidate was created.
+- NOT IMPLIED: later MorphTile main commits are not covered automatically; compatibility is widened only by rerunning the deterministic receipts against an exact identity.
 - NOT TESTED: rendered appearance or aesthetic quality.
 - HELD: no rendered observer or bridge execution in this repository.
 
