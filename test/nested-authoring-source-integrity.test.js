@@ -120,3 +120,77 @@ test("base_color Proxy is rejected before channel reads execute traps", () => {
   assert.equal(out.candidate, null);
   assert.deepEqual(target, [0.2, 0.25, 0.3]);
 });
+
+test("revoked nested rule and pattern Proxies reach explicit HOLDs instead of throwing", () => {
+  const revokedRule = Proxy.revocable({
+    kind: "facing",
+    direction: "up",
+    threshold: 0.6,
+    match_color: [0.9, 0.8, 0.7],
+    else_color: [0.1, 0.2, 0.3]
+  }, {});
+  revokedRule.revoke();
+  const ruleRequest = clone(fixture);
+  ruleRequest.request_id = "surface-rule-revoked-proxy-source-integrity";
+  ruleRequest.intent = { surface_rule: revokedRule.proxy };
+
+  let ruleOut;
+  assert.doesNotThrow(() => {
+    ruleOut = run(ruleRequest);
+  });
+  assert.equal(ruleOut.status, "HOLD");
+  assert.equal(ruleOut.holds[0].code, "HOLD_SURFACE_RULE_NONPORTABLE_VALUE");
+  assert.equal(ruleOut.candidate, null);
+
+  const revokedPattern = Proxy.revocable({ kind: "checker", scale: 0.5 }, {});
+  revokedPattern.revoke();
+  const patternRequest = clone(fixture);
+  patternRequest.request_id = "surface-pattern-revoked-proxy-source-integrity";
+  patternRequest.intent = { pattern: revokedPattern.proxy };
+
+  let patternOut;
+  assert.doesNotThrow(() => {
+    patternOut = run(patternRequest);
+  });
+  assert.equal(patternOut.status, "HOLD");
+  assert.equal(patternOut.holds[0].code, "HOLD_SURFACE_PATTERN_NONPORTABLE_VALUE");
+  assert.equal(patternOut.candidate, null);
+});
+
+test("sparse authored color arrays fail closed before transport can invent null channels", () => {
+  const sparseBase = [];
+  sparseBase.length = 3;
+  sparseBase[1] = 0.25;
+  sparseBase[2] = 0.3;
+  const baseRequest = clone(fixture);
+  baseRequest.request_id = "surface-base-color-sparse-source-integrity";
+  baseRequest.intent = { base_color: sparseBase };
+
+  const baseOut = run(baseRequest);
+  assert.equal(baseOut.status, "HOLD");
+  assert.equal(baseOut.holds[0].code, "HOLD_SURFACE_INTENT_NONPORTABLE_VALUE");
+  assert.match(baseOut.holds[0].detail, /intent\.base_color\[0\] is a sparse authored array slot/);
+  assert.equal(baseOut.candidate, null);
+
+  const sparseMatch = [];
+  sparseMatch.length = 3;
+  sparseMatch[1] = 0.8;
+  sparseMatch[2] = 0.7;
+  const ruleRequest = clone(fixture);
+  ruleRequest.request_id = "surface-rule-color-sparse-source-integrity";
+  ruleRequest.intent = {
+    surface_rule: {
+      kind: "facing",
+      direction: "up",
+      threshold: 0.6,
+      match_color: sparseMatch,
+      else_color: [0.1, 0.2, 0.3]
+    }
+  };
+
+  const ruleOut = run(ruleRequest);
+  assert.equal(ruleOut.status, "HOLD");
+  assert.equal(ruleOut.holds[0].code, "HOLD_SURFACE_RULE_NONPORTABLE_VALUE");
+  assert.match(ruleOut.holds[0].detail, /intent\.surface_rule\.match_color\[0\] is a sparse authored array slot/);
+  assert.equal(ruleOut.candidate, null);
+});
