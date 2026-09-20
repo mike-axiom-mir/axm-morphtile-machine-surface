@@ -10,11 +10,17 @@ const { buildEvidence, renderCase, verifyBaseline } = require("../tools/render-e
 
 const runtimePath = process.env.MORPHTILE_CORE_PATH;
 const runtimeCommit = process.env.MORPHTILE_COMMIT;
+const producerRepository = process.env.SURFACE_PRODUCER_REPOSITORY;
+const producerCommit = process.env.SURFACE_PRODUCER_COMMIT;
 const integrationTest = runtimePath ? test : test.skip;
 
-integrationTest("pinned MorphTile rasterizer produces deterministic Surface visual-evidence receipts without claiming visual quality", () => {
+integrationTest("pinned MorphTile rasterizer produces deterministic Surface visual-evidence receipts with exact producer provenance without claiming visual quality", () => {
   assert.equal(runtimeCommit, manifest.tested_against.commit, "evidence runtime must match machine.json pin");
+  assert.equal(producerRepository, "mike-axiom-mir/axm-morphtile-machine-surface", "producer repository must be explicitly pinned");
+  assert.match(producerCommit || "", /^[0-9a-f]{40}$/, "producer commit must be explicitly pinned to an exact SHA");
+
   const MorphTile = require(path.resolve(runtimePath));
+  const producer = { repository: producerRepository, commit: producerCommit };
 
   const first = renderCase(MorphTile, facingFixture, "facing-up-first");
   const second = renderCase(MorphTile, facingFixture, "facing-up-second");
@@ -24,9 +30,10 @@ integrationTest("pinned MorphTile rasterizer produces deterministic Surface visu
   assert.equal(first.receipt.technical_render, "PASS");
   assert.equal(first.receipt.visual_judgement, "NOT_REVIEWED");
 
-  const evidence = buildEvidence(MorphTile, runtimeCommit);
+  const evidence = buildEvidence(MorphTile, runtimeCommit, producer);
   assert.equal(evidence.status, "TECHNICALLY_RENDERED");
   assert.equal(evidence.visual_quality, "NOT_REVIEWED");
+  assert.deepEqual(evidence.producer, producer, "portable evidence must preserve the exact Surface producer revision");
   assert.equal(evidence.runtime.commit, runtimeCommit);
   assert.deepEqual(evidence.cases.map((entry) => entry.receipt.id), ["facing-up", "checker"]);
   assert.notEqual(
@@ -40,7 +47,33 @@ integrationTest("pinned MorphTile rasterizer produces deterministic Surface visu
     assert.ok(entry.receipt.tower_pixels > 0);
   }
 
-  assert.equal(verifyBaseline(evidence).status, "PASS", "exact reviewed pixel baseline must match");
+  const baseline = verifyBaseline(evidence, undefined, producer);
+  assert.equal(baseline.status, "PASS", "exact reviewed pixel baseline must match");
+  assert.deepEqual(baseline.producer, producer, "baseline receipt must bind the same external producer trust anchor");
+
+  assert.throws(
+    () => buildEvidence(MorphTile, runtimeCommit),
+    /explicit \{ repository, commit \} is required/,
+    "render evidence generation must fail closed when producer provenance is not supplied"
+  );
+
+  const missingProducer = { ...evidence };
+  delete missingProducer.producer;
+  assert.throws(
+    () => verifyBaseline(missingProducer, undefined, producer),
+    /producer identity missing from evidence/,
+    "baseline verification must reject portable evidence that lost producer provenance"
+  );
+
+  const mismatchedProducer = {
+    ...evidence,
+    producer: { ...producer, commit: "0".repeat(40) }
+  };
+  assert.throws(
+    () => verifyBaseline(mismatchedProducer, undefined, producer),
+    /producer commit mismatch/,
+    "baseline verification must bind evidence to the externally supplied exact Surface revision"
+  );
 
   const tampered = {
     ...evidence,
@@ -49,7 +82,7 @@ integrationTest("pinned MorphTile rasterizer produces deterministic Surface visu
       : entry)
   };
   assert.throws(
-    () => verifyBaseline(tampered),
+    () => verifyBaseline(tampered, undefined, producer),
     /rendered pixels drifted from the explicit baseline/,
     "pixel drift must fail closed instead of being silently accepted"
   );
