@@ -3,10 +3,10 @@
 Tested contract target:
 
 - repository: mike-axiom-mir/axm-morphtile
-- commit: b6b086edb70fd4657495fcf01cb9fcdedceafdaf
+- commit: ef2b3c6986aa1a333247feffc43a8443f17239d0
 - format: v0.4
 - provisional envelope: v0.1
-- fixture set: v0.3
+- fixture set: v0.4
 
 The adapter emits candidate data only. The receiving caller must validate it against the applicable MorphTile runtime, propose it through clone/plan, inspect conflicts and HOLDs, commit only with the applicable authority, preserve the receipt, and retain rollback.
 
@@ -18,9 +18,11 @@ The runtime suite passes all six named facing-rule candidates through real Morph
 
 The suite also executes the existing caller-authored raw-paint fixture in the same runtime. Surface Machine validates the bounded paint envelope, but MorphTile execution supplies the semantic evidence: the default box must produce exactly one upward face with the authored match channel values and five faces with the fallback values.
 
-Authored numeric-looking values are validated before normalization. Surface Machine must not reinterpret strings, booleans, or null through numeric coercion when the authoring contract requires a number.
+v0.4 additionally replays MorphTile's existing `checker` and `stripes` material semantics. Each named pattern must preserve the exact geometry positions and procedural-paint colors from an otherwise identical baseline while applying only its declared deterministic triangle attenuation factor (`0.62` for checker, `0.55` for stripes) to a non-empty subset of triangles and leaving a non-empty complementary subset unchanged.
 
-The compatibility pin advances from `a579182ae585e5722ac87dd0cc8209963b18d000` to `b6b086edb70fd4657495fcf01cb9fcdedceafdaf`. Compatibility is earned by replaying the semantic receipts rather than inferred from source similarity.
+Authored numeric-looking values are validated before normalization. Surface Machine must not reinterpret strings, booleans, or null through numeric coercion when the authoring contract requires a number. Pattern scale follows the same rule and must be positive finite when authored.
+
+The compatibility pin advances from `b6b086edb70fd4657495fcf01cb9fcdedceafdaf` to `ef2b3c6986aa1a333247feffc43a8443f17239d0`. Compatibility is earned by replaying the semantic receipts rather than inferred from source similarity.
 
 This checkout is test infrastructure only. Surface Machine does not vendor MorphTile or add a runtime dependency on the repository.
 
