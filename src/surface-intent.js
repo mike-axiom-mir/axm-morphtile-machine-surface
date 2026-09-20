@@ -93,8 +93,14 @@ function normalizeSurfaceIntent(intent) {
   const out = {};
   if (intent.base_color !== undefined) out.base_color = rgb(intent.base_color, "base_color");
   if (intent.paint !== undefined) out.paint = normalizePaint(intent.paint);
-  if (intent.surface_rule !== undefined) out.surface_rule = JSON.parse(JSON.stringify(intent.surface_rule));
-  if (intent.pattern !== undefined) out.pattern = JSON.parse(JSON.stringify(intent.pattern));
+
+  // Rule and pattern semantics are validated by their domain compilers. Keep the
+  // authored values intact until those validators run: JSON serialization may
+  // invoke caller-controlled toJSON hooks or rewrite non-finite values before
+  // the machine has decided whether the authored request is valid.
+  if (intent.surface_rule !== undefined) out.surface_rule = intent.surface_rule;
+  if (intent.pattern !== undefined) out.pattern = intent.pattern;
+
   if (intent.external_dependency !== undefined) {
     if (typeof intent.external_dependency !== "string" || !intent.external_dependency.trim()) {
       throw new SurfaceIntentError("HOLD_SURFACE_DEPENDENCY_INVALID", "external_dependency must be a non-empty string");
