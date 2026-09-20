@@ -13,6 +13,8 @@ jobs:
     env:
       MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile/core/morphtile.js
       MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
+      SURFACE_PRODUCER_REPOSITORY: mike-axiom-mir/axm-morphtile-machine-surface
+      SURFACE_PRODUCER_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
