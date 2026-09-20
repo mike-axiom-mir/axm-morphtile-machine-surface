@@ -10,7 +10,9 @@ const gradientFixture = require("../fixtures/request.axis-gradient.json");
 const stripesFixture = require("../fixtures/request.pattern-stripes.json");
 const {
   assertUniqueEvidenceIdentities,
+  attachEffectDelta,
   buildEvidence,
+  measureTargetPixelDelta,
   renderCase,
   renderDeterministicObservation,
   verifyBaseline
@@ -38,7 +40,44 @@ test("render evidence identities fail closed on duplicate case or request ids", 
   );
 });
 
-integrationTest("pinned MorphTile rasterizer separates reviewed pixel baselines from unbaselined deterministic Surface observations", () => {
+test("effect delta counts only target pixels and fails closed on coverage drift or a no-op treatment", () => {
+  const frame = (pixels, target = true) => ({
+    width: 1,
+    height: 1,
+    pixels: Uint8Array.from(pixels),
+    pick: () => target ? "mt_tower" : null
+  });
+
+  const control = frame([10, 20, 30, 255]);
+  const changed = frame([10, 21, 30, 255]);
+  assert.deepEqual(measureTargetPixelDelta(changed, control), {
+    target_id: "mt_tower",
+    target_pixels: 1,
+    changed_target_pixels: 1
+  });
+
+  assert.throws(
+    () => measureTargetPixelDelta(changed, frame([10, 20, 30, 255], false)),
+    /effect delta target coverage drifted/,
+    "material evidence must not compare pixels after target coverage changed"
+  );
+
+  const noOpObservation = {
+    frame: control,
+    receipt: { id: "no-op", request_id: "no-op-request" }
+  };
+  const explicitControl = {
+    frame: control,
+    receipt: { id: "control", request_id: "control-request", render_sha256: "a".repeat(64) }
+  };
+  assert.throws(
+    () => attachEffectDelta(noOpObservation, explicitControl),
+    /rendered surface effect is pixel-identical to control/,
+    "an observation must not claim an effect when target pixels are unchanged from its explicit control"
+  );
+});
+
+integrationTest("pinned MorphTile rasterizer separates reviewed baselines, deterministic observations and explicit effect controls", () => {
   assert.equal(runtimeCommit, manifest.tested_against.commit, "evidence runtime must match machine.json pin");
   assert.equal(producerRepository, "mike-axiom-mir/axm-morphtile-machine-surface", "producer repository must be explicitly pinned");
   assert.match(producerCommit || "", /^[0-9a-f]{40}$/, "producer commit must be explicitly pinned to an exact SHA");
@@ -69,7 +108,7 @@ integrationTest("pinned MorphTile rasterizer separates reviewed pixel baselines 
   assert.ok(stripesObservation.receipt.tower_pixels > 0);
 
   const evidence = buildEvidence(MorphTile, runtimeCommit, producer);
-  assert.equal(evidence.schema, "axm.morphtile.surface-render-evidence/v0.3");
+  assert.equal(evidence.schema, "axm.morphtile.surface-render-evidence/v0.4");
   assert.equal(evidence.status, "TECHNICALLY_RENDERED");
   assert.equal(evidence.visual_quality, "NOT_REVIEWED");
   assert.deepEqual(evidence.producer, producer, "portable evidence must preserve the exact Surface producer revision");
@@ -77,11 +116,21 @@ integrationTest("pinned MorphTile rasterizer separates reviewed pixel baselines 
   assert.deepEqual(evidence.baseline_scope, ["facing-up", "checker"]);
   assert.deepEqual(evidence.cases.map((entry) => entry.receipt.id), ["facing-up", "checker"]);
   assert.deepEqual(evidence.observations.map((entry) => entry.receipt.id), ["axis-gradient", "stripes"]);
+  assert.deepEqual(evidence.controls.map((entry) => entry.receipt.id), ["base-control"]);
   assert.notEqual(
     evidence.cases[0].receipt.render_sha256,
     evidence.cases[1].receipt.render_sha256,
     "facing and checker candidates must not collapse to an identical rendered pixel receipt"
   );
+
+  const baseControl = evidence.controls[0];
+  assert.equal(baseControl.receipt.evidence_tier, "TECHNICALLY_RENDERED_CONTROL");
+  assert.equal(baseControl.receipt.deterministic_replay, "PASS");
+  assert.equal(baseControl.receipt.pixel_baseline, "NOT_ESTABLISHED");
+  assert.equal(baseControl.receipt.visual_judgement, "NOT_REVIEWED");
+  assert.deepEqual(baseControl.receipt.control_for, ["axis-gradient", "stripes"]);
+  assert.ok(baseControl.receipt.tower_pixels > 0);
+
   for (const observation of evidence.observations) {
     assert.notEqual(
       observation.receipt.render_sha256,
@@ -93,16 +142,21 @@ integrationTest("pinned MorphTile rasterizer separates reviewed pixel baselines 
       evidence.cases[1].receipt.render_sha256,
       `${observation.receipt.id}: observation must not collapse to the checker reviewed case`
     );
+    assert.equal(observation.receipt.technical_render, "PASS");
+    assert.equal(observation.receipt.deterministic_replay, "PASS");
+    assert.equal(observation.receipt.pixel_baseline, "NOT_ESTABLISHED");
+    assert.equal(observation.receipt.visual_judgement, "NOT_REVIEWED");
+    assert.equal(observation.receipt.effect_delta.status, "PASS");
+    assert.equal(observation.receipt.effect_delta.target_id, "mt_tower");
+    assert.equal(observation.receipt.effect_delta.target_pixels, observation.receipt.tower_pixels);
+    assert.ok(observation.receipt.effect_delta.changed_target_pixels > 0, "named surface treatment must change target pixels relative to control");
+    assert.equal(observation.receipt.effect_delta.control_id, "base-control");
+    assert.equal(observation.receipt.effect_delta.control_request_id, "surface-base-control-1");
+    assert.equal(observation.receipt.effect_delta.control_render_sha256, baseControl.receipt.render_sha256);
   }
+
   for (const entry of evidence.cases) {
     assert.equal(entry.receipt.technical_render, "PASS");
-    assert.equal(entry.receipt.visual_judgement, "NOT_REVIEWED");
-    assert.ok(entry.receipt.tower_pixels > 0);
-  }
-  for (const entry of evidence.observations) {
-    assert.equal(entry.receipt.technical_render, "PASS");
-    assert.equal(entry.receipt.deterministic_replay, "PASS");
-    assert.equal(entry.receipt.pixel_baseline, "NOT_ESTABLISHED");
     assert.equal(entry.receipt.visual_judgement, "NOT_REVIEWED");
     assert.ok(entry.receipt.tower_pixels > 0);
   }
@@ -120,7 +174,17 @@ integrationTest("pinned MorphTile rasterizer separates reviewed pixel baselines 
     }))
   };
   const unchangedBaseline = verifyBaseline(observationTampered, undefined, producer);
-  assert.equal(unchangedBaseline.status, "PASS", "explicitly unbaselined observations must not silently enter reviewed baseline authority");
+  assert.equal(unchangedBaseline.status, "PASS", "unbaselined observations must not silently enter reviewed baseline authority");
+
+  const controlTampered = {
+    ...evidence,
+    controls: evidence.controls.map((entry) => ({
+      ...entry,
+      receipt: { ...entry.receipt, render_sha256: "0".repeat(64) }
+    }))
+  };
+  const baselineUnaffectedByControl = verifyBaseline(controlTampered, undefined, producer);
+  assert.equal(baselineUnaffectedByControl.status, "PASS", "technical controls must not silently enter reviewed baseline authority");
 
   assert.throws(
     () => buildEvidence(MorphTile, runtimeCommit),
