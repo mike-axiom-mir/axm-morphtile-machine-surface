@@ -4,9 +4,9 @@ This repository keeps **TECHNICALLY VALID**, **RENDERED**, **VISUALLY OBSERVED**
 
 The render-evidence lane exists to make the first two claims reproducible without silently upgrading either into aesthetic approval.
 
-## Two evidence scopes
+## Three evidence scopes
 
-Render evidence intentionally has two scopes rather than one undifferentiated list.
+Render evidence intentionally has three scopes rather than one undifferentiated list.
 
 ### Reviewed pixel baseline
 
@@ -15,19 +15,9 @@ Render evidence intentionally has two scopes rather than one undifferentiated li
 - `fixtures/request.facing-up.json`
 - `fixtures/request.pattern-checker.json`
 
-For each reviewed request the tool:
+For each reviewed request the tool requires an explicit Surface producer identity, runs Surface Machine, applies the material to `mt_tower` through a disposable MorphTile clone → edit → plan → commit path, renders with MorphTile's own pinned rasterizer, requires target coverage, records the exact render SHA-256, and compares it with `fixtures/render-evidence.expected.json`.
 
-1. requires an explicit Surface producer identity `{ repository, commit }` supplied by the caller/CI rather than inferred from ambient git state;
-2. runs Surface Machine and requires a material `CANDIDATE`;
-3. creates a disposable workspace from the exact pinned MorphTile runtime;
-4. applies the material to `mt_tower` through MorphTile clone → edit → plan → commit;
-5. renders the workspace with MorphTile's own built-in rasterizer at one fixed camera and resolution;
-6. requires the target tower to occupy rendered pixels;
-7. records MorphTile's exact `renderReceipt` SHA-256;
-8. encodes the frame with the pinned runtime's own dependency-free PNG encoder;
-9. compares the result with the explicit pixel baseline in `fixtures/render-evidence.expected.json`;
-10. requires the evidence producer identity to match the separately supplied exact Surface revision;
-11. fails closed if producer identity, runtime identity, request identity, target coverage, reviewed case set, or reviewed pixels drift.
+The baseline verifier fails closed if producer identity, runtime identity, request identity, target coverage, reviewed case set, or reviewed pixels drift.
 
 ### Unbaselined deterministic observations
 
@@ -36,28 +26,43 @@ Two already-existing Surface semantics run as separate technical observations:
 - `fixtures/request.axis-gradient.json`
 - `fixtures/request.pattern-stripes.json`
 
-Each observation renders the exact same request twice through the pinned MorphTile runtime and requires both render hashes and target-pixel coverage values to match. The resulting receipt is explicitly marked:
+Each observation renders the exact same request twice through the pinned MorphTile runtime and requires both render hashes and target-pixel coverage values to match. The resulting receipt remains explicitly:
 
 - `deterministic_replay: PASS`
 - `pixel_baseline: NOT_ESTABLISHED`
 - `evidence_tier: TECHNICALLY_RENDERED_UNBASELINED`
 - `visual_judgement: NOT_REVIEWED`
 
-This creates inspectable evidence without silently giving a newly generated image the authority of the reviewed pixel baseline. A future reviewer may deliberately establish a pixel baseline after understanding an image; the evidence generator does not self-promote it.
+This proves repeatable technical rendering, not reviewed pixel authority and not aesthetic quality.
 
-The evidence case registry also fails closed if two cases accidentally reuse the same case id or request id. This keeps portable receipts unambiguous as the observation set grows.
+### Explicit effect control
 
-CI uploads `facing-up.png`, `checker.png`, `axis-gradient.png`, `stripes.png`, and `receipt.json` as the `surface-render-evidence` artifact.
+Repeatable rendering alone does not prove that a named surface treatment changed the target. Render-evidence v0.4 therefore adds `fixtures/request.base-control.json`, an ordinary base-only Surface request using the same base colour as the gradient and stripes fixtures.
+
+The control is itself rendered twice and marked `TECHNICALLY_RENDERED_CONTROL`. For each named observation the harness compares subject and control frames only on `mt_tower` pixels. It requires identical target pick coverage and at least one changed target RGBA pixel before emitting:
+
+- `effect_delta.status: PASS`
+- the exact control id and request id;
+- the control render SHA-256;
+- total target pixels;
+- changed target pixels.
+
+If target coverage changes, comparable pixel buffers are unavailable, or the named treatment is pixel-identical to its explicit control on the target, the evidence path fails closed. This is technical effect evidence only. It still does not say the effect looks good.
+
+The evidence registry also fails closed if two reviewed cases, observations, or controls reuse the same case id or request id. Portable receipts therefore cannot silently become ambiguous as coverage grows.
+
+CI uploads `facing-up.png`, `checker.png`, `axis-gradient.png`, `stripes.png`, `base-control.png`, and `receipt.json` as the `surface-render-evidence` artifact.
 
 ## Evidence meanings
 
 - exact producer provenance: the portable receipt names the Surface repository + exact producer commit supplied by the caller/CI; this is separate from both pixel identity and MorphTile runtime identity.
 - `TECHNICALLY_RENDERED`: the exact Surface candidate reached the exact pinned MorphTile rasterizer and produced a frame.
 - deterministic replay `PASS`: two exact-input renders on the same pinned runtime produced the same pixel hash and target coverage.
+- effect delta `PASS`: the named treatment preserved target coverage and changed one or more target pixels relative to an explicit Surface-authored control.
 - pixel baseline `PASS`: a reviewed case is pixel-identical to the explicit drift baseline for the exact runtime pin and externally supplied producer revision.
 - pixel baseline `NOT_ESTABLISHED`: a technical render exists and is reproducible, but no reviewed pixel identity has been granted to that case.
 - `VISUALLY OBSERVED`: a human or AI observer actually opened the generated image and can state only what was visibly observed.
-- `VISUALLY GOOD`: a separate aesthetic judgement. Pixel identity and technical rendering do not earn it.
+- `VISUALLY GOOD`: a separate aesthetic judgement. Pixel identity, deterministic replay, and effect-delta evidence do not earn it.
 
 The machine-generated receipt deliberately writes `visual_judgement: NOT_REVIEWED`. An observer must not silently rewrite that field merely because the PNG exists.
 
@@ -72,25 +77,20 @@ The Surface commit is supplied explicitly through `SURFACE_PRODUCER_REPOSITORY` 
 
 ## Baseline discipline
 
-A pixel hash is a **drift sentinel**, not an aesthetic score. If a reviewed hash changes, do not auto-accept the new hash. First determine whether the cause is:
+A pixel hash is a **drift sentinel**, not an aesthetic score. If a reviewed hash changes, do not auto-accept the new hash. First determine whether the cause is an intentional Surface semantic change, a MorphTile raster/runtime change, camera/evidence-harness drift, or a regression.
 
-- an intentional Surface semantic change;
-- a MorphTile raster/runtime change;
-- camera/evidence-harness drift;
-- or a regression.
-
-Only after the change is understood should the explicit baseline be updated. Unbaselined observations are deliberately excluded from reviewed-baseline authority; changing or tampering with an observation cannot make the reviewed baseline verifier accept a new reviewed hash or reject an unchanged reviewed case.
+Only after the change is understood should the explicit baseline be updated. Unbaselined observations and technical controls are deliberately excluded from reviewed-baseline authority; changing either cannot silently broaden the reviewed set.
 
 ## Current bounded observation
 
-The first generated artifact for the exact runtime pin `ef2b3c6986aa1a333247feffc43a8443f17239d0` was opened during the original render-evidence producer activation. In both reviewed frames `mt_tower` is visible, and the `facing-up` and `checker` frames are visibly distinct. That observation is **not** a claim that either look is aesthetically good.
+The reviewed `facing-up` and `checker` frames were previously opened and `mt_tower` was visible in both materially distinct frames. That observation is **not** a claim that either look is aesthetically good.
 
 Current reviewed drift sentinels:
 
 - `facing-up`: `54ca8766c52bb13e8a55268f5794a638befc49fc6045189826059e30f327fb1e`
 - `checker`: `a440cf8410e48730fef743fd1c86bfd88c49e982c912c662a89d68b27549d73d`
 
-The axis-gradient and stripes frames are deterministic technical observations only until a separate review deliberately establishes broader visual evidence.
+Axis-gradient and stripes remain outside reviewed pixel authority. Their deterministic replay and effect-delta receipts are technical evidence only until separate observation/review establishes broader visual claims.
 
 ## Run locally
 
@@ -98,7 +98,7 @@ Point the machine at the exact MorphTile core identity declared in `machine.json
 
 ```sh
 MORPHTILE_CORE_PATH=/path/to/axm-morphtile/core/morphtile.js \
-MORPHTILE_COMMIT=ef2b3c6986aa1a333247feffc43a8443f17239d0 \
+MORPHTILE_COMMIT=26b89a77f6a90715a6742dc4d084008ba63731b6 \
 SURFACE_PRODUCER_REPOSITORY=mike-axiom-mir/axm-morphtile-machine-surface \
 SURFACE_PRODUCER_COMMIT=<exact-40-char-surface-commit> \
 npm run evidence:render
