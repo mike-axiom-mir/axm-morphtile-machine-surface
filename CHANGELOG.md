@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — render-evidence v0.4
+
+- Re-pinned exact Surface compatibility and render evidence from MorphTile `ef2b3c6986aa1a333247feffc43a8443f17239d0` to current core `26b89a77f6a90715a6742dc4d084008ba63731b6` after the universal non-finite recipe boundary merged into core.
+- Added one explicit base-only render control using the same base material as the existing `axis-gradient` and `stripes` observation fixtures.
+- Added deterministic target-pixel effect-delta receipts: an observation now must preserve `mt_tower` pick coverage and change at least one target RGBA pixel relative to the explicit control before `effect_delta: PASS` is emitted.
+- Added fail-closed tests for target-coverage drift and pixel-identical no-op treatments so repeatable rendering cannot be mistaken for evidence that a named surface treatment actually affected the target.
+- Kept the effect control and both observations outside reviewed pixel-baseline authority. `facing-up` + `checker` remain the only reviewed drift sentinels; controls/observations remain `NOT_REVIEWED` aesthetically.
+- Advanced portable render receipt schema to `axm.morphtile.surface-render-evidence/v0.4`; creation-machine version remains `0.5.1` because no creation vocabulary or MorphTile runtime semantics changed.
+
 ## Unreleased — render-evidence v0.3
 
 - Extended deterministic render evidence to the existing `axis_gradient` request without adding new material vocabulary.
