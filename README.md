@@ -4,7 +4,7 @@ Turns bounded surface intent into candidate MorphTile material facets. The machi
 
 ## v0.3 intent integrity
 
-Surface Machine now rejects top-level intent fields it does not understand instead of silently dropping them. `base_color` must be a finite RGB triplet in 0..1. Caller-authored `paint` is still supported, but its small envelope is bounded to `color` and optional numeric `vars`.
+Surface Machine rejects top-level intent fields it does not understand instead of silently dropping them. `base_color` must be an authored finite-number RGB triplet in 0..1; strings, booleans and null are not coerced into numeric meaning. Caller-authored `paint` is still supported, but its small envelope is bounded to `color` and optional numeric `vars`.
 
 Caller paint expressions are preserved as data; Surface Machine does not claim their runtime meaning merely because their envelope is structurally valid. Such candidates carry `CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED`, and exact cross-repository conformance executes the existing raw-paint fixture in MorphTile.
 
@@ -22,7 +22,7 @@ A caller may provide a bounded `surface_rule` instead of hand-authoring MorphTil
 }
 ```
 
-Supported named directions are `up`, `down`, `left`, `right`, `forward`, and `back`. They compile deterministically to MorphTile's existing `nx`, `ny`, and `nz` paint variables. Thresholds are bounded to 0..1 and both colors must be finite RGB triplets in 0..1.
+Supported named directions are `up`, `down`, `left`, `right`, `forward`, and `back`. They compile deterministically to MorphTile's existing `nx`, `ny`, and `nz` paint variables. Thresholds must be authored finite numbers in 0..1 and both colors must be authored finite-number RGB triplets in 0..1; numeric-looking non-number values HOLD rather than being coerced.
 
 Raw `paint` remains supported. A request that supplies both `paint` and `surface_rule` is HELD rather than silently choosing an author.
 
@@ -47,9 +47,9 @@ Node 18 or later; zero runtime dependencies; no secrets or network required.
 - IMPLEMENTED: fail-closed surface intent normalization plus the six-direction `facing` rule compiler.
 - TESTED: only the claims named by the local and exact cross-repository runtime tests.
 - EXPERIMENTAL: envelope v0.1, surface-rule vocabulary v0.1, and every candidate schema in this machine.
-- COMPATIBILITY TARGET: exact MorphTile v0.4 snapshot `59ae96ef5394ca4b68441aa7da6e1c4084c48673`.
+- COMPATIBILITY TARGET: exact MorphTile v0.4 snapshot `a579182ae585e5722ac87dd0cc8209963b18d000`.
 - NOT IMPLIED: later MorphTile commits are not covered automatically; compatibility is widened only by rerunning deterministic receipts against an exact identity.
 - NOT TESTED: rendered appearance or aesthetic quality.
-- HELD: no rendered observer or bridge execution in this repository.
+- HELD: no rendered observer or bridge execution in this repository; independent Verification must re-attack the repaired producer head before integration.
 
 This is a bounded deterministic creation machine, not evidence that MorphTile can autonomously manufacture MorphTile.
