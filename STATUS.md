@@ -1,10 +1,10 @@
 # Status
 
 - Machine version: 0.5.1
-- State: CREATION SEMANTICS + REVIEWED RENDER EVIDENCE + GRADIENT OBSERVATION INTEGRATED; STRIPES RENDER-OBSERVATION CANDIDATE OPEN
+- State: CREATION SEMANTICS + REVIEWED RENDER EVIDENCE + GRADIENT/STRIPES TECHNICAL OBSERVATIONS INTEGRATED; CURRENT-CORE + EFFECT-DELTA CANDIDATE OPEN
 - Local test command: `npm test`
 - Render evidence command: `npm run evidence:render`
-- Pinned MorphTile runtime target: v0.4 at `ef2b3c6986aa1a333247feffc43a8443f17239d0`
+- Candidate MorphTile runtime target: v0.4 at `26b89a77f6a90715a6742dc4d084008ba63731b6`
 - Envelope: provisional v0.1
 - Visual quality: `NOT_ASSESSED`
 
@@ -12,65 +12,58 @@
 
 - Six named facing directions compile deterministically to MorphTile normal-aware paint expressions.
 - Bounded `axis_gradient` rules compile deterministic position-aware paint over MorphTile `x`, `y`, or `z` triangle-centre variables.
-- Gradient endpoint clamps are explicit literal branches: at/below `from` returns exact authored `start_color`, at/above `to` returns exact authored `end_color`, and only interior samples interpolate.
-- Gradient axes, ranges and endpoint colors fail closed: only `x|y|z`, finite authored numbers with `to > from`, and authored finite-number RGB triplets in 0..1 are accepted.
-- Runtime conformance includes a mixed ascending/descending RGB adversarial receipt to catch floating-point endpoint identity and per-channel bound regressions.
+- Gradient endpoint clamps return exact authored endpoint colors outside the declared range and interpolate only inside it.
 - `checker` and `stripes` compile deterministically to MorphTile's existing material `pattern` + positive finite `scale` runtime fields.
-- Unknown pattern names/fields and malformed scales fail closed; Surface Machine does not silently map arbitrary names to MorphTile's generic fallback/noise runtime branch.
-- Pattern modulation may coexist with raw paint or a named surface rule because the runtime applies pattern shading separately from procedural paint colors.
-- Thresholds and RGB colors for named facing rules are bounded and malformed rules HOLD explicitly.
 - Authored numeric types are validated before normalization; strings, booleans and null are not coerced into numeric surface meaning.
-- Top-level surface intent fails closed on fields the machine would otherwise ignore.
-- `base_color` is validated as an authored finite-number RGB triplet in 0..1 before emission.
-- Caller `paint` is bounded to `color` plus optional numeric `vars`; malformed or unknown fields HOLD rather than disappearing silently.
-- Caller-authored paint expressions remain pass-through data, but Surface Machine does not present shape validation as proof of expression semantics; candidates carry `CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED`.
-- Structural, runtime-render, reviewed-pixel, visual-observation and aesthetic evidence remain separate claims.
-- The reviewed render-evidence foundation is integrated on main with explicit Surface producer provenance, exact MorphTile runtime identity, reviewed pixel drift sentinels for `facing-up` and `checker`, and `visual_judgement: NOT_REVIEWED`.
-- The `axis-gradient` render observation is integrated and independently verified as `TECHNICALLY_RENDERED_UNBASELINED`; it does not hold reviewed-baseline or aesthetic authority.
+- Unknown surface/pattern fields fail closed instead of disappearing silently.
+- Caller-authored paint remains pass-through data with `CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED`; Surface does not confuse envelope shape with runtime semantic proof.
+- Reviewed render evidence uses MorphTile's real pinned rasterizer and keeps producer identity, runtime identity, reviewed pixel identity, visual observation and aesthetic quality separate.
+- Reviewed pixel authority remains exactly `facing-up` + `checker`.
+- `axis-gradient` and `stripes` are integrated as independently verified `TECHNICALLY_RENDERED_UNBASELINED` observations; neither has reviewed pixel-baseline or aesthetic authority.
+- Independent Verification passed Surface PR #12 exact head `28fc911b9d0ff104e26b62daacdcf096fd2dee86`; that candidate was then integrated into Surface main.
 
 ## Current candidate
 
-PR #12 extends the existing unbaselined render-observation path to the already-supported `stripes` material pattern. It does not add new material vocabulary or change MorphTile runtime semantics.
+The current candidate does not widen material vocabulary. It addresses two evidence-backed gaps in the integrated lane.
 
-The exact stripes request is rendered twice through the pinned MorphTile rasterizer and must produce identical render hashes and target-pixel coverage before it can emit `deterministic_replay: PASS`. Its receipt remains `pixel_baseline: NOT_ESTABLISHED`, `TECHNICALLY_RENDERED_UNBASELINED`, and `visual_judgement: NOT_REVIEWED`.
+First, MorphTile core advanced after the universal non-finite recipe boundary merged. Surface therefore re-pins its manifest, CI and reviewed-baseline runtime identity from `ef2b3c6986aa1a333247feffc43a8443f17239d0` to current MorphTile main `26b89a77f6a90715a6742dc4d084008ba63731b6` and must replay its exact runtime/render receipts rather than assuming compatibility.
 
-The candidate also makes the render-evidence registry fail closed when two entries reuse the same case id or request id, preventing ambiguous portable receipts as observation coverage grows.
+Second, deterministic replay alone only proves that a render repeats. It does not prove that a named surface treatment actually changed the target. Render-evidence v0.4 adds one explicit base-only Surface control and requires both `axis-gradient` and `stripes` to preserve `mt_tower` pick coverage while changing at least one target RGBA pixel relative to that control before emitting `effect_delta: PASS`.
 
-The existing reviewed `facing-up` and `checker` baseline remains a closed exact case set. Neither gradient nor stripes may silently enter reviewed-baseline authority merely because a deterministic PNG exists.
+The control, gradient and stripes stay outside reviewed pixel-baseline authority. The producer may prove deterministic technical effect; it may not self-promote those pixels into reviewed or aesthetic truth.
 
 ## Reusable rules learned
 
-When exact endpoint identity is part of a deterministic creation contract, endpoint values must be represented as explicit branches rather than reconstructed by floating-point interpolation. Mixed ascending/descending channel tests are required because algebraic equivalence does not imply IEEE identity.
+**Compatibility widening is replay-earned.** When a universal core truth boundary changes, a creator machine that relies on that runtime should re-pin and replay public receipts rather than infer compatibility or duplicate generic core validation.
 
-Stable substrate semantics should become bounded creation vocabulary only when they remove repeated hand-authored reasoning without inventing a new runtime contract. Render evidence should use the substrate's real renderer rather than a private approximation.
+**Determinism and effect are different technical facts.** Same input → same pixels proves repeatability. Named treatment → target pixels differ from an explicit control proves that the treatment had a rendered effect. Neither proves visual quality.
 
-**Technical render determinism and reviewed pixel authority are different evidence layers.** A new or repaired surface rule may earn deterministic technical rendering before anyone deliberately grants its pixels reviewed-baseline status. Neither layer is an aesthetic score.
+**Technical controls do not acquire reviewed authority by existing.** Controls and unbaselined observations remain separate from the reviewed pixel set unless a deliberate review grants additional authority.
 
-**Portable evidence identities must be collision-free.** Once more than one technical observation exists, duplicate case ids or duplicate request ids are ambiguous evidence and must fail closed rather than being resolved by array order or map overwrite.
+**Portable evidence identities must be collision-free.** Duplicate case ids or request ids fail closed instead of being resolved by order or overwrite.
 
 ## Placement decision
 
-The material creation rules and render-evidence harness belong in Surface Machine, not MorphTile core. Current MorphTile already represents position/normal-aware procedural paint, `checker|stripes|noise` material patterns, and supplies the deterministic rasterizer, render receipts, and PNG encoder needed for exact evidence. The current MorphTile main still matches the Surface runtime pin, so this activation found no missing universal material/runtime primitive and no compatibility-widening event to replay.
+The creation rules and render-evidence/control harness belong in Surface Machine, not MorphTile core. MorphTile already represents position/normal-aware procedural paint, `checker|stripes|noise` material patterns, and supplies the deterministic rasterizer, render receipts and PNG encoder. The core change being re-pinned is the generic recipe finite-meaning boundary, not a missing material primitive.
+
+No MorphTile-core Surface candidate is justified by this activation.
 
 ## Evidence boundary
 
-Independent Verification previously replayed and passed the repaired v0.5.1 gradient endpoint attack on exact Surface head `bf9db61993acb089b7d46b76135b9c4ae93392db` against exact MorphTile `ef2b3c6986aa1a333247feffc43a8443f17239d0`.
-
-The render-evidence provenance repair was independently verified on exact Surface head `941779901406961190e27a6abac9307ab00b89ae`, then integrated by the Creation Director.
-
-Surface PR #11 was independently verified by Verification PR #23 and integrated by the Creation Director. Integrated Surface main is `9d6d83fe9c898b4034d1f74685ca1744c8cd55e9`; its `axis-gradient` evidence remains an unbaselined technical observation rather than reviewed visual authority.
-
-For PR #12, producer CI on the exact candidate head must pass before any TECHNICALLY RENDERED claim is promoted. Independent Verification and Director integration remain separate even after producer CI.
-
-`VISUALLY GOOD` remains `NOT_ASSESSED` regardless of technical CI.
+- Integrated Surface main before this candidate: `191069a6dfbcfdb766128e97fa629f4ca7921be3`.
+- Independent Verification already passed integrated stripes observation semantics on exact pre-merge head `28fc911b9d0ff104e26b62daacdcf096fd2dee86` against MorphTile `ef2b3c6986aa1a333247feffc43a8443f17239d0`.
+- Producer evidence for the current-core/effect-delta candidate must pass on its final exact head before `TECHNICALLY VALID` or `TECHNICALLY RENDERED` is promoted for that head.
+- Independent Verification of the final candidate remains separate even after producer CI.
+- `VISUALLY GOOD` remains `NOT_ASSESSED` regardless of technical CI.
 
 ## HELD / open
 
-- Producer CI + independent Verification/Director integration of PR #12.
-- `VISUALLY GOOD` / aesthetic acceptance remains `NOT_ASSESSED`.
+- Final producer CI for the current exact candidate head.
+- Independent Verification and Creation Director integration of this candidate.
+- Any promotion of gradient, stripes or base-control pixels into reviewed-baseline authority.
+- `VISUALLY GOOD` / aesthetic acceptance.
 - No arbitrary-direction/vector facing rule without a demonstrated request.
-- No radial/ring/noise vocabulary merely because raw MorphTile paint could express it; add named creation contracts only when a real request earns them.
-- No arbitrary/noise pattern vocabulary merely because the runtime currently has a fallback implementation branch.
-- No Surface-Machine claim that arbitrary caller expressions are semantically valid merely because their envelope is well shaped.
-- No automatic aesthetic acceptance.
-- No claim of production readiness, CANON, or compatibility beyond the exact tested runtime identity.
+- No radial/ring/noise vocabulary merely because raw MorphTile paint could express it.
+- No arbitrary/noise pattern vocabulary merely because the runtime has a fallback implementation branch.
+- No Surface claim that arbitrary caller expressions are semantically valid merely because their envelope is well shaped.
+- No automatic aesthetic acceptance, production readiness, CANON, or compatibility beyond the exact tested runtime identity.
