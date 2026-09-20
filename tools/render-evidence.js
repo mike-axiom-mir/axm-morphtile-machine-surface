@@ -6,6 +6,7 @@ const path = require("node:path");
 const { MACHINE, run } = require("../src");
 const facingFixture = require("../fixtures/request.facing-up.json");
 const checkerFixture = require("../fixtures/request.pattern-checker.json");
+const expectedBaseline = require("../fixtures/render-evidence.expected.json");
 
 const DEFAULT_RENDER = Object.freeze({
   width: 360,
@@ -109,6 +110,34 @@ function buildEvidence(MorphTile, runtimeCommit) {
   };
 }
 
+function verifyBaseline(evidence, baseline = expectedBaseline) {
+  if (!evidence || !evidence.runtime || evidence.runtime.commit !== baseline.runtime_commit) {
+    fail(`render baseline runtime mismatch: expected ${baseline.runtime_commit}`);
+  }
+
+  const actual = new Map(evidence.cases.map((entry) => [entry.receipt.id, entry.receipt]));
+  const expectedIds = Object.keys(baseline.cases).sort();
+  const actualIds = [...actual.keys()].sort();
+  if (JSON.stringify(actualIds) !== JSON.stringify(expectedIds)) {
+    fail(`render baseline case set drifted: expected ${expectedIds.join(",")}, got ${actualIds.join(",")}`);
+  }
+
+  for (const id of expectedIds) {
+    const expected = baseline.cases[id];
+    const receipt = actual.get(id);
+    if (receipt.request_id !== expected.request_id) fail(`${id}: request identity drifted from the render baseline`);
+    if (receipt.render_sha256 !== expected.render_sha256) fail(`${id}: rendered pixels drifted from the explicit baseline`);
+    if (receipt.tower_pixels !== expected.tower_pixels) fail(`${id}: target pixel coverage drifted from the explicit baseline`);
+  }
+
+  return {
+    schema: baseline.schema,
+    status: "PASS",
+    runtime_commit: baseline.runtime_commit,
+    meaning: baseline.meaning
+  };
+}
+
 function writeEvidence(outputDir) {
   const runtimePath = process.env.MORPHTILE_CORE_PATH;
   const runtimeCommit = process.env.MORPHTILE_COMMIT;
@@ -120,6 +149,7 @@ function writeEvidence(outputDir) {
   const runtimeRoot = path.resolve(path.dirname(resolvedRuntime), "..");
   const png = require(path.join(runtimeRoot, "tools", "png.js"));
   const evidence = buildEvidence(MorphTile, runtimeCommit);
+  const pixelBaseline = verifyBaseline(evidence);
 
   fs.mkdirSync(outputDir, { recursive: true });
   for (const entry of evidence.cases) {
@@ -131,6 +161,7 @@ function writeEvidence(outputDir) {
 
   const plain = {
     ...evidence,
+    pixel_baseline: pixelBaseline,
     cases: evidence.cases.map((entry) => entry.receipt)
   };
   fs.writeFileSync(path.join(outputDir, "receipt.json"), `${JSON.stringify(plain, null, 2)}\n`);
@@ -143,6 +174,7 @@ if (require.main === module) {
   process.stdout.write(`${JSON.stringify({
     status: receipt.status,
     visual_quality: receipt.visual_quality,
+    pixel_baseline: receipt.pixel_baseline.status,
     runtime: receipt.runtime,
     cases: receipt.cases.map(({ id, render_sha256, tower_pixels }) => ({ id, render_sha256, tower_pixels }))
   })}\n`);
@@ -153,5 +185,6 @@ module.exports = {
   applyCandidateToTower,
   renderCase,
   buildEvidence,
+  verifyBaseline,
   writeEvidence
 };
