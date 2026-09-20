@@ -1,8 +1,14 @@
 # MorphTile Surface Machine
 
-Turns bounded surface intent into candidate MorphTile material facets. The machine keeps structural validity separate from visual quality and turns repeated surface-orientation reasoning into deterministic paint rules.
+Turns bounded surface intent into candidate MorphTile material facets. The machine keeps structural validity separate from visual quality and converts repeated surface reasoning into deterministic, fail-closed creation rules.
 
-## v0.2 facing vocabulary
+## v0.3 intent integrity
+
+Surface Machine now rejects top-level intent fields it does not understand instead of silently dropping them. `base_color` must be a finite RGB triplet in 0..1. Caller-authored `paint` is still supported, but its small envelope is bounded to `color` and optional numeric `vars`.
+
+Caller paint expressions are preserved as data; Surface Machine does not claim their runtime meaning merely because their envelope is structurally valid. Such candidates carry `CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED`, and exact cross-repository conformance executes the existing raw-paint fixture in MorphTile.
+
+## Facing vocabulary
 
 A caller may provide a bounded `surface_rule` instead of hand-authoring MorphTile paint expressions:
 
@@ -22,13 +28,13 @@ Raw `paint` remains supported. A request that supplies both `paint` and `surface
 
 ## Boundary answers
 
-1. **What it does:** Turns bounded surface intent into candidate MorphTile material facets, including deterministic named facing rules.
-2. **What it does not own:** Geometry topology, canonical worlds, merge authority, or automatic aesthetic truth.
+1. **What it does:** Turns bounded surface intent into candidate MorphTile material facets, including deterministic named facing rules and fail-closed intent normalization.
+2. **What it does not own:** Geometry topology, arbitrary caller-expression semantics, canonical worlds, merge authority, or automatic aesthetic truth.
 3. **What it accepts:** `axm.morphtile.surface-request/v0.1` in the provisional v0.1 envelope.
 4. **What it produces:** A `morphtile.facet-candidate/v0.4` material candidate.
 5. **MorphTile interaction:** output goes through MorphTile's public contracts and clone → plan → commit → receipt → rollback path. MorphTile does not depend on this repository.
-6. **Evidence:** Structural and visual evidence are separate; local tests prove deterministic rule compilation and explicit HOLD behavior while visual evidence remains `NOT_TESTED`.
-7. **When it cannot satisfy a request:** Missing external material capability returns `HOLD_MATERIAL_DEPENDENCY_MISSING`; malformed or conflicting surface rules return explicit `HOLD_SURFACE_RULE_*` codes.
+6. **Evidence:** Structural and visual evidence are separate; exact runtime conformance covers the named facing rules and the existing caller-paint fixture while visual quality remains `NOT_TESTED`.
+7. **When it cannot satisfy a request:** malformed or unsupported creation intent returns explicit `HOLD_SURFACE_*` codes; missing external material capability returns `HOLD_MATERIAL_DEPENDENCY_MISSING`.
 
 ## Run
 
@@ -38,11 +44,11 @@ Node 18 or later; zero runtime dependencies; no secrets or network required.
 
 ## Truth boundary
 
-- IMPLEMENTED: the tiny adapter, local envelope, and six-direction `facing` rule compiler.
-- TESTED: the claims named by the local test files, including exact cross-repository runtime conformance when `MORPHTILE_CORE_PATH` is supplied by CI.
-- EXPERIMENTAL: envelope v0.1, surface-rule vocabulary v0.1, and every candidate schema in this foundation.
-- COMPATIBILITY TARGET: exact MorphTile v0.4 snapshot `4346df01ed18cd1336064f9323d7766ff4f6338a`, current main when this candidate was created.
-- NOT IMPLIED: later MorphTile main commits are not covered automatically; compatibility is widened only by rerunning the deterministic receipts against an exact identity.
+- IMPLEMENTED: fail-closed surface intent normalization plus the six-direction `facing` rule compiler.
+- TESTED: only the claims named by the local and exact cross-repository runtime tests.
+- EXPERIMENTAL: envelope v0.1, surface-rule vocabulary v0.1, and every candidate schema in this machine.
+- COMPATIBILITY TARGET: exact MorphTile v0.4 snapshot `59ae96ef5394ca4b68441aa7da6e1c4084c48673`.
+- NOT IMPLIED: later MorphTile commits are not covered automatically; compatibility is widened only by rerunning deterministic receipts against an exact identity.
 - NOT TESTED: rendered appearance or aesthetic quality.
 - HELD: no rendered observer or bridge execution in this repository.
 
