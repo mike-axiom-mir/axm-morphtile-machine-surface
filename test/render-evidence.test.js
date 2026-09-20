@@ -6,7 +6,7 @@ const path = require("node:path");
 
 const manifest = require("../machine.json");
 const facingFixture = require("../fixtures/request.facing-up.json");
-const { buildEvidence, renderCase } = require("../tools/render-evidence");
+const { buildEvidence, renderCase, verifyBaseline } = require("../tools/render-evidence");
 
 const runtimePath = process.env.MORPHTILE_CORE_PATH;
 const runtimeCommit = process.env.MORPHTILE_COMMIT;
@@ -39,4 +39,18 @@ integrationTest("pinned MorphTile rasterizer produces deterministic Surface visu
     assert.equal(entry.receipt.visual_judgement, "NOT_REVIEWED");
     assert.ok(entry.receipt.tower_pixels > 0);
   }
+
+  assert.equal(verifyBaseline(evidence).status, "PASS", "exact reviewed pixel baseline must match");
+
+  const tampered = {
+    ...evidence,
+    cases: evidence.cases.map((entry, index) => index === 0
+      ? { ...entry, receipt: { ...entry.receipt, render_sha256: "0".repeat(64) } }
+      : entry)
+  };
+  assert.throws(
+    () => verifyBaseline(tampered),
+    /rendered pixels drifted from the explicit baseline/,
+    "pixel drift must fail closed instead of being silently accepted"
+  );
 });
