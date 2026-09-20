@@ -95,6 +95,38 @@ test("caller paint rejects a serialization hook instead of letting transport rew
   assert.equal(request.intent.paint.color[0], expression);
 });
 
+test("caller paint rejects top-level accessors before executing caller-controlled code", () => {
+  let accessorCalls = 0;
+  const authoredColor = [["+", 0.2, ["*", 0.3, ["var", "ny"]]], 0.55, 0.2];
+  const paint = { vars: { gain: 0.3 } };
+  const colorGetter = function colorGetter() {
+    accessorCalls += 1;
+    return authoredColor;
+  };
+  Object.defineProperty(paint, "color", {
+    enumerable: true,
+    configurable: true,
+    get: colorGetter
+  });
+
+  const request = clone(fixture);
+  request.request_id = "surface-paint-accessor-source-integrity";
+  request.intent = { base_color: [0.2, 0.25, 0.3], paint };
+  const descriptorBefore = Object.getOwnPropertyDescriptor(paint, "color");
+
+  const out = run(request);
+
+  const descriptorAfter = Object.getOwnPropertyDescriptor(paint, "color");
+  assert.equal(accessorCalls, 0, "paint normalization must reject the accessor without executing it");
+  assert.equal(out.status, "HOLD");
+  assert.equal(out.holds[0].code, "HOLD_SURFACE_PAINT_NONPORTABLE_VALUE");
+  assert.match(out.holds[0].detail, /paint\.color uses an accessor/);
+  assert.equal(out.candidate, null);
+  assert.equal(descriptorAfter.get, descriptorBefore.get);
+  assert.equal(descriptorAfter.enumerable, descriptorBefore.enumerable);
+  assert.equal(descriptorAfter.configurable, descriptorBefore.configurable);
+});
+
 test("caller paint rejects values that JSON would silently rewrite to null", () => {
   const expression = ["+", 0.2, undefined];
   const request = requestWithPaint(expression, "surface-paint-undefined-source-integrity");
