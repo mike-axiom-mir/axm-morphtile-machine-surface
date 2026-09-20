@@ -4,7 +4,7 @@ const { assertRequest, result } = require("./envelope");
 const { SurfaceIntentError, normalizeSurfaceIntent } = require("./surface-intent");
 const { SurfaceRuleError, compileSurfaceRule } = require("./surface-rules");
 const { SurfacePatternError, compileSurfacePattern } = require("./surface-patterns");
-const MACHINE = { id: "axm.morphtile.machine.surface", version: "0.4.0" };
+const MACHINE = { id: "axm.morphtile.machine.surface", version: "0.5.0" };
 
 function hold(request, error, fallbackCode) {
   const code = error && error.code ? error.code : fallbackCode;
@@ -72,7 +72,7 @@ function run(request) {
     evidence.push({
       kind: "STRUCTURAL",
       status: "PASS",
-      check: "named surface rule compiled to MorphTile normal paint expression",
+      check: "named surface rule compiled to a bounded MorphTile paint expression",
       rule: normalizedRule
     });
   } else if (intent.paint) {
