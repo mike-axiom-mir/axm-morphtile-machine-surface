@@ -23,8 +23,8 @@ function requestFor(direction) {
   };
 }
 
-test("machine v0.3 compiles six named facing directions into MorphTile normal variables", () => {
-  assert.equal(MACHINE.version, "0.3.0");
+test("machine v0.4 compiles six named facing directions into MorphTile normal variables", () => {
+  assert.equal(MACHINE.version, "0.4.0");
   for (const [direction, normalExpr] of Object.entries(NORMAL_EXPR)) {
     const out = run(requestFor(direction));
     assert.equal(out.status, "CANDIDATE", direction);
