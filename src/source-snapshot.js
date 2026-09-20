@@ -100,6 +100,15 @@ function snapshotCompiledAuthoringValue(value, path, code, stack = new Set()) {
     for (const name of Object.getOwnPropertyNames(value)) {
       const descriptor = descriptors[name];
       if (!descriptor.enumerable) {
+        // Preserve the established pre-serialization boundary: a hidden
+        // data-property toJSON hook is metadata outside the compiled Surface
+        // grammar. It is intentionally excluded without execution so the
+        // authored semantic fields retain error priority. Other hidden fields
+        // may carry authored meaning and therefore must not collapse to
+        // omission silently.
+        if (name === "toJSON" && "value" in descriptor && typeof descriptor.value === "function") {
+          continue;
+        }
         fail(code, path + "." + name, "is non-enumerable and compiled authored data would drop it as if omitted");
       }
       if (!("value" in descriptor)) {
