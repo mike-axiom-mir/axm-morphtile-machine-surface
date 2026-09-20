@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-09-20
+
+- Added a fail-closed top-level surface intent contract so unsupported or misspelled fields cannot be silently ignored.
+- Bounded `base_color`, caller `paint` shape, numeric paint vars, and external dependency names before candidate emission.
+- Kept caller-authored paint expressions available while explicitly warning that expression semantics belong to the MorphTile runtime.
+- Extended exact runtime conformance to execute the existing caller-paint fixture as well as all six named facing rules.
+- Advanced the exact MorphTile compatibility target to `59ae96ef5394ca4b68441aa7da6e1c4084c48673`; compatibility is earned by replay, not inference.
+- Preserved TECHNICALLY VALID vs VISUALLY GOOD as separate evidence classes.
+
 ## 0.2.0 — 2026-09-20
 
 - Added a deterministic `facing` surface-rule vocabulary for six named directions.
