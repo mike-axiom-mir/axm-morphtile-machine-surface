@@ -91,17 +91,19 @@ test("axis_gradient compiles explicit endpoint branches with interior interpolat
 });
 
 test("axis_gradient keeps authored mixed-direction endpoints as literal branch values", () => {
-  const out = run(gradientRequest({
-    from: -0.25,
-    to: 0.25,
-    start_color: [0.9, 0.1, 0.8],
-    end_color: [0.1, 0.8, 0.2]
-  }));
+  const start = [0.9, 0.1, 0.8];
+  const end = [0.1, 0.8, 0.2];
+  const out = run(gradientRequest({ from: -0.25, to: 0.25, start_color: start, end_color: end }));
   assert.equal(out.status, "CANDIDATE");
   const colors = out.candidate.value.data.paint.color;
   for (let i = 0; i < 3; i++) {
-    assert.deepEqual(colors[i].slice(0, 4), ["if", [">=", ["var", "y"], 0.25], [0.1, 0.8, 0.2][i]]);
-    assert.deepEqual(colors[i][4].slice(0, 4), ["if", [">=", -0.25, ["var", "y"]], [0.9, 0.1, 0.8][i]]);
+    const expression = colors[i];
+    assert.equal(expression[0], "if");
+    assert.deepEqual(expression[1], [">=", ["var", "y"], 0.25]);
+    assert.equal(expression[2], end[i]);
+    assert.equal(expression[3][0], "if");
+    assert.deepEqual(expression[3][1], [">=", -0.25, ["var", "y"]]);
+    assert.equal(expression[3][2], start[i]);
   }
 });
 
