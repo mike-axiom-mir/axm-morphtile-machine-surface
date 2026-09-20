@@ -4,7 +4,7 @@ const { assertRequest, result } = require("./envelope");
 const { SurfaceIntentError, normalizeSurfaceIntent } = require("./surface-intent");
 const { SurfaceRuleError, compileSurfaceRule } = require("./surface-rules");
 const { SurfacePatternError, compileSurfacePattern } = require("./surface-patterns");
-const MACHINE = { id: "axm.morphtile.machine.surface", version: "0.5.0" };
+const MACHINE = { id: "axm.morphtile.machine.surface", version: "0.5.1" };
 
 function hold(request, error, fallbackCode) {
   const code = error && error.code ? error.code : fallbackCode;

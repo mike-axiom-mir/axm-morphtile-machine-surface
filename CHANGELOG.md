@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1 — 2026-09-20
+
+- Repaired `axis_gradient` endpoint clamping after independent Verification proved that algebraic interpolation at `t=1` could produce IEEE values such as `0.09999999999999998` for an authored endpoint of `0.1`.
+- Gradient paint now uses explicit endpoint branches: positions at/below `from` return the authored `start_color` literally, positions at/above `to` return the authored `end_color` literally, and only interior positions execute interpolation arithmetic.
+- Added an adversarial mixed ascending/descending RGB runtime receipt using `start=[0.9,0.1,0.8]`, `end=[0.1,0.8,0.2]`, `from=-0.25`, `to=0.25`; both endpoint identity and per-channel bounds are checked against the exact pinned MorphTile runtime.
+- Bumped machine/package metadata to `0.5.1`. The repair remains Surface Machine creation logic; no MorphTile-core primitive was required.
+- VISUALLY GOOD remains `NOT_TESTED`; producer CI and independent Verification remain separate evidence lanes.
+
 ## 0.5.0 — 2026-09-20
 
 - Added bounded `axis_gradient` surface vocabulary over MorphTile's existing per-triangle `x`, `y`, and `z` paint variables.

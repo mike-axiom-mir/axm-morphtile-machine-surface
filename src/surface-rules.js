@@ -107,12 +107,26 @@ function compileAxisGradient(rule) {
   const start = rgb(rule.start_color, "start_color");
   const end = rgb(rule.end_color, "end_color");
   const span = to - from;
-  const t = ["min", 1, ["max", 0, ["/", ["-", ["var", rule.axis], from], span]]];
-  const color = start.map((channel, index) => [
-    "+",
-    channel,
-    ["*", end[index] - channel, JSON.parse(JSON.stringify(t))]
-  ]);
+  const position = ["var", rule.axis];
+  const interiorT = ["/", ["-", JSON.parse(JSON.stringify(position)), from], span];
+  const color = start.map((channel, index) => {
+    const interior = [
+      "+",
+      channel,
+      ["*", end[index] - channel, JSON.parse(JSON.stringify(interiorT))]
+    ];
+    return [
+      "if",
+      [">=", JSON.parse(JSON.stringify(position)), to],
+      end[index],
+      [
+        "if",
+        [">=", from, JSON.parse(JSON.stringify(position))],
+        channel,
+        interior
+      ]
+    ];
+  });
 
   return {
     normalized: {

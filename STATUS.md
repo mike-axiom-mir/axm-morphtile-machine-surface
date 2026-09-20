@@ -1,7 +1,7 @@
 # Status
 
-- Machine version: 0.5.0
-- State: CANDIDATE — PRODUCER TECHNICALLY VALID PASS WHEN CURRENT PR CHECKS ARE GREEN / INDEPENDENT VERIFICATION SEPARATE
+- Machine version: 0.5.1
+- State: CANDIDATE REPAIR — PRODUCER TECHNICALLY VALID ONLY WHEN CURRENT PR CHECKS ARE GREEN / INDEPENDENT VERIFICATION SEPARATE
 - Local test command: `npm test`
 - Pinned MorphTile runtime target: v0.4 at `ef2b3c6986aa1a333247feffc43a8443f17239d0`
 - Envelope: provisional v0.1
@@ -10,8 +10,10 @@
 ## Implemented
 
 - Six named facing directions compile deterministically to MorphTile normal-aware paint expressions.
-- Bounded `axis_gradient` rules compile deterministic clamped position-aware paint over MorphTile `x`, `y`, or `z` triangle-centre variables.
+- Bounded `axis_gradient` rules compile deterministic position-aware paint over MorphTile `x`, `y`, or `z` triangle-centre variables.
+- Gradient endpoint clamps are explicit literal branches: at/below `from` returns exact authored `start_color`, at/above `to` returns exact authored `end_color`, and only interior samples interpolate.
 - Gradient axes, ranges and endpoint colors fail closed: only `x|y|z`, finite authored numbers with `to > from`, and authored finite-number RGB triplets in 0..1 are accepted.
+- Runtime conformance includes a mixed ascending/descending RGB adversarial receipt to catch floating-point endpoint identity and per-channel bound regressions.
 - `checker` and `stripes` compile deterministically to MorphTile's existing material `pattern` + positive finite `scale` runtime fields.
 - Unknown pattern names/fields and malformed scales fail closed; Surface Machine does not silently map arbitrary names to MorphTile's generic fallback/noise runtime branch.
 - Pattern modulation may coexist with raw paint or a named surface rule because the runtime applies pattern shading separately from procedural paint colors.
@@ -21,24 +23,23 @@
 - `base_color` is validated as an authored finite-number RGB triplet in 0..1 before emission.
 - Caller `paint` is bounded to `color` plus optional numeric `vars`; malformed or unknown fields HOLD rather than disappearing silently.
 - Caller-authored paint expressions remain pass-through data, but Surface Machine does not present shape validation as proof of expression semantics; candidates carry `CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED`.
-- Runtime conformance exercises all six named facing candidates, all three axis-gradient directions, the existing caller-paint fixture, and checker/stripes pattern attenuation through real MorphTile `createTile`, `validateTile`, and `compileMesh`.
 - Structural and visual evidence remain separate; visual evidence is `NOT_TESTED`.
 
 ## Reusable rules learned
 
-Creation vocabulary should wrap already-stable substrate semantics when it removes repeated hand-authored expression reasoning without creating a new runtime contract. Authored numeric types must be validated before normalization. Spatial look-development rules should declare their coordinate frame and bounded interval explicitly, then compile to inspectable expressions; clamping should be part of the deterministic rule rather than an unstated aesthetic assumption. Orthogonal material operations should compose rather than silently overwrite each other.
+When exact endpoint identity is part of a deterministic creation contract, endpoint values must be represented as explicit branches rather than reconstructed by floating-point interpolation. Mixed ascending/descending channel tests are required because algebraic equivalence does not imply IEEE identity. Creation vocabulary should wrap already-stable substrate semantics when it removes repeated hand-authored expression reasoning without creating a new runtime contract.
 
 ## Placement decision
 
-This belongs in Surface Machine, not MorphTile core. Current MorphTile already represents position-aware procedural paint using `x`, `y`, and `z`, already supplies the required arithmetic/min/max expression words, and explicitly describes gradients as paint-authored colour behavior. The new rule is deterministic creation vocabulary over that substrate, not a missing universal material primitive.
+This repair belongs in Surface Machine, not MorphTile core. Current MorphTile already represents position-aware procedural paint and supplies the existing expression words required for explicit endpoint branches and interior interpolation. Independent Verification diagnosed a producer compilation error rather than a missing universal material primitive.
 
 ## Evidence boundary
 
-Producer compatibility with MorphTile `ef2b3c6986aa1a333247feffc43a8443f17239d0` is TECHNICALLY VALID only when the current PR head's GitHub Actions checks are green. Independent Verification is a separate evidence lane and must not be inferred from producer CI. Later MorphTile commits are not covered automatically.
+Independent Verification rejected merged v0.5.0 exact-clamp/bounds claims on mixed-direction RGB because interpolation at `t=1` produced microscopic IEEE drift. v0.5.1 adds the producer repair and exact adversarial runtime receipt. Producer TECHNICALLY VALID is earned only by the current candidate head's green GitHub Actions against exact MorphTile `ef2b3c6986aa1a333247feffc43a8443f17239d0`. Independent re-verification of the repaired head remains separate and required before upgrading that lane to PASS.
 
 ## HELD / open
 
-- Independent Verification has not yet attacked this v0.5 candidate head.
+- Independent Verification of the repaired v0.5.1 exact head.
 - No rendered observer or human visual inspection; VISUALLY GOOD remains `NOT_TESTED`.
 - No arbitrary-direction/vector facing rule without a demonstrated request.
 - No radial/ring/noise vocabulary merely because raw MorphTile paint could express it; add named creation contracts only when a real request earns them.

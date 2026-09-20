@@ -6,7 +6,7 @@ Tested contract target:
 - commit: ef2b3c6986aa1a333247feffc43a8443f17239d0
 - format: v0.4
 - provisional envelope: v0.1
-- fixture set: v0.5
+- fixture set: v0.5.1
 
 The adapter emits candidate data only. The receiving caller must validate it against the applicable MorphTile runtime, propose it through clone/plan, inspect conflicts and HOLDs, commit only with the applicable authority, preserve the receipt, and retain rollback.
 
@@ -16,7 +16,9 @@ CI checks out the exact `tested_against.commit` above into an isolated `.runtime
 
 The runtime suite passes all six named facing-rule candidates through real MorphTile `createTile`, `validateTile`, and `compileMesh`. For the pinned default box mesh, each named direction must paint exactly one face with `match_color` and the other five faces with `else_color`; exact triangle, position, material-color and face-count receipts make drift visible.
 
-v0.5 also executes `axis_gradient` for each of `x`, `y`, and `z`. The gradient candidate must preserve the baseline geometry positions and base triangle material colors, must produce multiple position-dependent procedural-paint colors, must reach the declared clamped endpoint colors on the pinned box, and every emitted paint channel must remain finite and inside the interval bounded by the two authored endpoints.
+v0.5+ executes `axis_gradient` for each of `x`, `y`, and `z`. The gradient candidate must preserve baseline geometry positions and base triangle material colors, produce multiple position-dependent procedural-paint colors, reach the declared clamped endpoint colors on the pinned box, and keep every emitted paint channel finite and inside the interval bounded by the two authored endpoints.
+
+v0.5.1 adds the adversarial boundary that v0.5.0 missed: a mixed ascending/descending RGB gradient (`start=[0.9,0.1,0.8]`, `end=[0.1,0.8,0.2]`, `from=-0.25`, `to=0.25`) must reproduce both authored endpoint triplets exactly and remain within each channel's authored interval. Endpoint identity is implemented by explicit branches; interpolation arithmetic is used only for interior positions.
 
 The suite also executes the existing caller-authored raw-paint fixture in the same runtime. Surface Machine validates the bounded paint envelope, but MorphTile execution supplies the semantic evidence: the default box must produce exactly one upward face with the authored match channel values and five faces with the fallback values.
 
