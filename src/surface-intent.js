@@ -127,15 +127,21 @@ function normalizePaint(paint) {
   if (!isPlainObject(paint)) {
     throw new SurfaceIntentError("HOLD_SURFACE_PAINT_INVALID", "paint must be an object");
   }
-  assertOnlyFields(paint, PAINT_FIELDS, "HOLD_SURFACE_PAINT_FIELD_UNKNOWN", "paint");
-  if (!Array.isArray(paint.color) || paint.color.length !== 3) {
+
+  // Establish the portable plain-data boundary before reading any caller-owned
+  // paint field. This prevents accessors from executing before Surface has
+  // decided whether the authored data is admissible.
+  const portablePaint = clonePortablePaintValue(paint, "paint");
+
+  assertOnlyFields(portablePaint, PAINT_FIELDS, "HOLD_SURFACE_PAINT_FIELD_UNKNOWN", "paint");
+  if (!Array.isArray(portablePaint.color) || portablePaint.color.length !== 3) {
     throw new SurfaceIntentError("HOLD_SURFACE_PAINT_INVALID", "paint.color must contain exactly three channel expressions");
   }
-  if (paint.vars !== undefined) {
-    if (!isPlainObject(paint.vars)) {
+  if (portablePaint.vars !== undefined) {
+    if (!isPlainObject(portablePaint.vars)) {
       throw new SurfaceIntentError("HOLD_SURFACE_PAINT_VARS_INVALID", "paint.vars must be an object when supplied");
     }
-    const bad = Object.entries(paint.vars)
+    const bad = Object.entries(portablePaint.vars)
       .filter(([, value]) => typeof value !== "number" || !Number.isFinite(value))
       .map(([key]) => key)
       .sort();
@@ -143,7 +149,7 @@ function normalizePaint(paint) {
       throw new SurfaceIntentError("HOLD_SURFACE_PAINT_VARS_INVALID", "paint.vars values must be finite numbers: " + bad.join(", "));
     }
   }
-  return clonePortablePaintValue(paint, "paint");
+  return portablePaint;
 }
 
 function normalizeSurfaceIntent(intent) {
