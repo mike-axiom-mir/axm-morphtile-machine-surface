@@ -6,7 +6,13 @@ const path = require("node:path");
 
 const manifest = require("../machine.json");
 const facingFixture = require("../fixtures/request.facing-up.json");
-const { buildEvidence, renderCase, verifyBaseline } = require("../tools/render-evidence");
+const gradientFixture = require("../fixtures/request.axis-gradient.json");
+const {
+  buildEvidence,
+  renderCase,
+  renderDeterministicObservation,
+  verifyBaseline
+} = require("../tools/render-evidence");
 
 const runtimePath = process.env.MORPHTILE_CORE_PATH;
 const runtimeCommit = process.env.MORPHTILE_COMMIT;
@@ -14,7 +20,7 @@ const producerRepository = process.env.SURFACE_PRODUCER_REPOSITORY;
 const producerCommit = process.env.SURFACE_PRODUCER_COMMIT;
 const integrationTest = runtimePath ? test : test.skip;
 
-integrationTest("pinned MorphTile rasterizer produces deterministic Surface visual-evidence receipts with exact producer provenance without claiming visual quality", () => {
+integrationTest("pinned MorphTile rasterizer separates reviewed pixel baselines from unbaselined deterministic Surface observations", () => {
   assert.equal(runtimeCommit, manifest.tested_against.commit, "evidence runtime must match machine.json pin");
   assert.equal(producerRepository, "mike-axiom-mir/axm-morphtile-machine-surface", "producer repository must be explicitly pinned");
   assert.match(producerCommit || "", /^[0-9a-f]{40}$/, "producer commit must be explicitly pinned to an exact SHA");
@@ -30,26 +36,64 @@ integrationTest("pinned MorphTile rasterizer produces deterministic Surface visu
   assert.equal(first.receipt.technical_render, "PASS");
   assert.equal(first.receipt.visual_judgement, "NOT_REVIEWED");
 
+  const gradientObservation = renderDeterministicObservation(MorphTile, gradientFixture, "axis-gradient-test");
+  assert.equal(gradientObservation.receipt.deterministic_replay, "PASS");
+  assert.equal(gradientObservation.receipt.pixel_baseline, "NOT_ESTABLISHED");
+  assert.equal(gradientObservation.receipt.evidence_tier, "TECHNICALLY_RENDERED_UNBASELINED");
+  assert.equal(gradientObservation.receipt.visual_judgement, "NOT_REVIEWED");
+  assert.ok(gradientObservation.receipt.tower_pixels > 0);
+
   const evidence = buildEvidence(MorphTile, runtimeCommit, producer);
+  assert.equal(evidence.schema, "axm.morphtile.surface-render-evidence/v0.3");
   assert.equal(evidence.status, "TECHNICALLY_RENDERED");
   assert.equal(evidence.visual_quality, "NOT_REVIEWED");
   assert.deepEqual(evidence.producer, producer, "portable evidence must preserve the exact Surface producer revision");
   assert.equal(evidence.runtime.commit, runtimeCommit);
+  assert.deepEqual(evidence.baseline_scope, ["facing-up", "checker"]);
   assert.deepEqual(evidence.cases.map((entry) => entry.receipt.id), ["facing-up", "checker"]);
+  assert.deepEqual(evidence.observations.map((entry) => entry.receipt.id), ["axis-gradient"]);
   assert.notEqual(
     evidence.cases[0].receipt.render_sha256,
     evidence.cases[1].receipt.render_sha256,
     "facing and checker candidates must not collapse to an identical rendered pixel receipt"
+  );
+  assert.notEqual(
+    evidence.observations[0].receipt.render_sha256,
+    evidence.cases[0].receipt.render_sha256,
+    "axis gradient observation must not collapse to the facing-up reviewed case"
+  );
+  assert.notEqual(
+    evidence.observations[0].receipt.render_sha256,
+    evidence.cases[1].receipt.render_sha256,
+    "axis gradient observation must not collapse to the checker reviewed case"
   );
   for (const entry of evidence.cases) {
     assert.equal(entry.receipt.technical_render, "PASS");
     assert.equal(entry.receipt.visual_judgement, "NOT_REVIEWED");
     assert.ok(entry.receipt.tower_pixels > 0);
   }
+  for (const entry of evidence.observations) {
+    assert.equal(entry.receipt.technical_render, "PASS");
+    assert.equal(entry.receipt.deterministic_replay, "PASS");
+    assert.equal(entry.receipt.pixel_baseline, "NOT_ESTABLISHED");
+    assert.equal(entry.receipt.visual_judgement, "NOT_REVIEWED");
+    assert.ok(entry.receipt.tower_pixels > 0);
+  }
 
   const baseline = verifyBaseline(evidence, undefined, producer);
   assert.equal(baseline.status, "PASS", "exact reviewed pixel baseline must match");
+  assert.deepEqual(baseline.reviewed_case_ids, ["checker", "facing-up"], "baseline verifier must name only reviewed cases");
   assert.deepEqual(baseline.producer, producer, "baseline receipt must bind the same external producer trust anchor");
+
+  const observationTampered = {
+    ...evidence,
+    observations: evidence.observations.map((entry) => ({
+      ...entry,
+      receipt: { ...entry.receipt, render_sha256: "0".repeat(64) }
+    }))
+  };
+  const unchangedBaseline = verifyBaseline(observationTampered, undefined, producer);
+  assert.equal(unchangedBaseline.status, "PASS", "an explicitly unbaselined observation must not silently enter reviewed baseline authority");
 
   assert.throws(
     () => buildEvidence(MorphTile, runtimeCommit),
@@ -84,6 +128,6 @@ integrationTest("pinned MorphTile rasterizer produces deterministic Surface visu
   assert.throws(
     () => verifyBaseline(tampered, undefined, producer),
     /rendered pixels drifted from the explicit baseline/,
-    "pixel drift must fail closed instead of being silently accepted"
+    "reviewed pixel drift must fail closed instead of being silently accepted"
   );
 });
