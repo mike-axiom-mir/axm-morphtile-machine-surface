@@ -29,11 +29,13 @@ function rgb(value, field) {
   if (!Array.isArray(value) || value.length !== 3) {
     throw new SurfaceIntentError("HOLD_SURFACE_COLOR_INVALID", field + " must be an RGB triplet");
   }
-  const out = value.map(Number);
-  if (out.some((v) => !Number.isFinite(v) || v < 0 || v > 1)) {
-    throw new SurfaceIntentError("HOLD_SURFACE_COLOR_INVALID", field + " channels must be finite numbers from 0 to 1");
+  if (value.some((v) => typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 1)) {
+    throw new SurfaceIntentError(
+      "HOLD_SURFACE_COLOR_INVALID",
+      field + " channels must be authored as finite numbers from 0 to 1"
+    );
   }
-  return out;
+  return value.slice();
 }
 
 function normalizePaint(paint) {
