@@ -47,9 +47,9 @@ Node 18 or later; zero runtime dependencies; no secrets or network required.
 - IMPLEMENTED: fail-closed surface intent normalization plus the six-direction `facing` rule compiler.
 - TESTED: only the claims named by the local and exact cross-repository runtime tests.
 - EXPERIMENTAL: envelope v0.1, surface-rule vocabulary v0.1, and every candidate schema in this machine.
-- COMPATIBILITY TARGET: exact MorphTile v0.4 snapshot `a579182ae585e5722ac87dd0cc8209963b18d000`.
+- COMPATIBILITY TARGET: exact MorphTile v0.4 snapshot `b6b086edb70fd4657495fcf01cb9fcdedceafdaf`.
 - NOT IMPLIED: later MorphTile commits are not covered automatically; compatibility is widened only by rerunning deterministic receipts against an exact identity.
 - NOT TESTED: rendered appearance or aesthetic quality.
-- HELD: no rendered observer or bridge execution in this repository; independent Verification must re-attack the repaired producer head before integration.
+- HELD: no rendered observer or bridge execution in this repository; independent Verification remains separate from producer evidence.
 
 This is a bounded deterministic creation machine, not evidence that MorphTile can autonomously manufacture MorphTile.
