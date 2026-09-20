@@ -8,6 +8,9 @@ const facingFixture = require("../fixtures/request.facing-up.json");
 const checkerFixture = require("../fixtures/request.pattern-checker.json");
 const expectedBaseline = require("../fixtures/render-evidence.expected.json");
 
+const SURFACE_REPOSITORY = "mike-axiom-mir/axm-morphtile-machine-surface";
+const COMMIT_RE = /^[0-9a-f]{40}$/;
+
 const DEFAULT_RENDER = Object.freeze({
   width: 360,
   height: 300,
@@ -18,6 +21,19 @@ function fail(message) {
   const error = new Error(message);
   error.code = "SURFACE_RENDER_EVIDENCE_FAILED";
   throw error;
+}
+
+function requireProducerIdentity(identity, label = "producer identity") {
+  if (!identity || typeof identity !== "object" || Array.isArray(identity)) {
+    fail(`${label}: explicit { repository, commit } is required`);
+  }
+  if (identity.repository !== SURFACE_REPOSITORY) {
+    fail(`${label}: repository must be ${SURFACE_REPOSITORY}`);
+  }
+  if (typeof identity.commit !== "string" || !COMMIT_RE.test(identity.commit)) {
+    fail(`${label}: commit must be an exact 40-character lowercase git SHA`);
+  }
+  return Object.freeze({ repository: identity.repository, commit: identity.commit });
 }
 
 function applyCandidateToTower(MorphTile, result, label) {
@@ -87,7 +103,8 @@ function renderCase(MorphTile, request, label, renderOptions = DEFAULT_RENDER) {
   };
 }
 
-function buildEvidence(MorphTile, runtimeCommit) {
+function buildEvidence(MorphTile, runtimeCommit, producerIdentity) {
+  const producer = requireProducerIdentity(producerIdentity);
   const cases = [
     renderCase(MorphTile, facingFixture, "facing-up"),
     renderCase(MorphTile, checkerFixture, "checker")
@@ -98,8 +115,9 @@ function buildEvidence(MorphTile, runtimeCommit) {
   }
 
   return {
-    schema: "axm.morphtile.surface-render-evidence/v0.1",
+    schema: "axm.morphtile.surface-render-evidence/v0.2",
     machine: MACHINE,
+    producer,
     runtime: {
       repository: "mike-axiom-mir/axm-morphtile",
       commit: runtimeCommit || null
@@ -110,8 +128,16 @@ function buildEvidence(MorphTile, runtimeCommit) {
   };
 }
 
-function verifyBaseline(evidence, baseline = expectedBaseline) {
-  if (!evidence || !evidence.runtime || evidence.runtime.commit !== baseline.runtime_commit) {
+function verifyBaseline(evidence, baseline = expectedBaseline, expectedProducerIdentity) {
+  const expectedProducer = requireProducerIdentity(expectedProducerIdentity, "expected producer identity");
+  if (!evidence || !evidence.producer) fail("render baseline producer identity missing from evidence");
+  if (evidence.producer.repository !== expectedProducer.repository) {
+    fail(`render baseline producer repository mismatch: expected ${expectedProducer.repository}`);
+  }
+  if (evidence.producer.commit !== expectedProducer.commit) {
+    fail(`render baseline producer commit mismatch: expected ${expectedProducer.commit}`);
+  }
+  if (!evidence.runtime || evidence.runtime.commit !== baseline.runtime_commit) {
     fail(`render baseline runtime mismatch: expected ${baseline.runtime_commit}`);
   }
 
@@ -133,6 +159,7 @@ function verifyBaseline(evidence, baseline = expectedBaseline) {
   return {
     schema: baseline.schema,
     status: "PASS",
+    producer: expectedProducer,
     runtime_commit: baseline.runtime_commit,
     meaning: baseline.meaning
   };
@@ -141,15 +168,18 @@ function verifyBaseline(evidence, baseline = expectedBaseline) {
 function writeEvidence(outputDir) {
   const runtimePath = process.env.MORPHTILE_CORE_PATH;
   const runtimeCommit = process.env.MORPHTILE_COMMIT;
+  const producerRepository = process.env.SURFACE_PRODUCER_REPOSITORY;
+  const producerCommit = process.env.SURFACE_PRODUCER_COMMIT;
   if (!runtimePath) fail("MORPHTILE_CORE_PATH is required");
   if (!runtimeCommit) fail("MORPHTILE_COMMIT is required");
 
+  const producer = requireProducerIdentity({ repository: producerRepository, commit: producerCommit });
   const resolvedRuntime = path.resolve(runtimePath);
   const MorphTile = require(resolvedRuntime);
   const runtimeRoot = path.resolve(path.dirname(resolvedRuntime), "..");
   const png = require(path.join(runtimeRoot, "tools", "png.js"));
-  const evidence = buildEvidence(MorphTile, runtimeCommit);
-  const pixelBaseline = verifyBaseline(evidence);
+  const evidence = buildEvidence(MorphTile, runtimeCommit, producer);
+  const pixelBaseline = verifyBaseline(evidence, expectedBaseline, producer);
 
   fs.mkdirSync(outputDir, { recursive: true });
   for (const entry of evidence.cases) {
@@ -175,6 +205,7 @@ if (require.main === module) {
     status: receipt.status,
     visual_quality: receipt.visual_quality,
     pixel_baseline: receipt.pixel_baseline.status,
+    producer: receipt.producer,
     runtime: receipt.runtime,
     cases: receipt.cases.map(({ id, render_sha256, tower_pixels }) => ({ id, render_sha256, tower_pixels }))
   })}\n`);
@@ -186,5 +217,6 @@ module.exports = {
   renderCase,
   buildEvidence,
   verifyBaseline,
-  writeEvidence
+  writeEvidence,
+  requireProducerIdentity
 };
