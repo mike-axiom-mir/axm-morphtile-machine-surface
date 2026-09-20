@@ -1,6 +1,7 @@
 "use strict";
 
 const { types: utilTypes } = require("node:util");
+const { snapshotCompiledAuthoringValue } = require("./source-snapshot");
 
 const INTENT_FIELDS = Object.freeze(["base_color", "paint", "surface_rule", "pattern", "external_dependency"]);
 const PAINT_FIELDS = Object.freeze(["color", "vars"]);
@@ -222,15 +223,33 @@ function normalizeSurfaceIntent(intent) {
   const authoredIntent = snapshotSurfaceIntent(intent);
 
   const out = {};
-  if (authoredIntent.base_color !== undefined) out.base_color = rgb(authoredIntent.base_color, "base_color");
+  if (authoredIntent.base_color !== undefined) {
+    const baseColor = snapshotCompiledAuthoringValue(
+      authoredIntent.base_color,
+      "intent.base_color",
+      "HOLD_SURFACE_INTENT_NONPORTABLE_VALUE"
+    );
+    out.base_color = rgb(baseColor, "base_color");
+  }
   if (authoredIntent.paint !== undefined) out.paint = normalizePaint(authoredIntent.paint);
 
-  // Rule and pattern semantics are validated by their domain compilers. Keep the
-  // authored values intact until those validators run: JSON serialization may
-  // invoke caller-controlled toJSON hooks or rewrite non-finite values before
-  // the machine has decided whether the authored request is valid.
-  if (authoredIntent.surface_rule !== undefined) out.surface_rule = authoredIntent.surface_rule;
-  if (authoredIntent.pattern !== undefined) out.pattern = authoredIntent.pattern;
+  // Rule and pattern semantics are validated by their domain compilers. Before
+  // those compilers read nested caller-owned fields, snapshot the enumerable
+  // authored grammar without invoking accessors, Proxy traps, or hidden hooks.
+  if (authoredIntent.surface_rule !== undefined) {
+    out.surface_rule = snapshotCompiledAuthoringValue(
+      authoredIntent.surface_rule,
+      "intent.surface_rule",
+      "HOLD_SURFACE_RULE_NONPORTABLE_VALUE"
+    );
+  }
+  if (authoredIntent.pattern !== undefined) {
+    out.pattern = snapshotCompiledAuthoringValue(
+      authoredIntent.pattern,
+      "intent.pattern",
+      "HOLD_SURFACE_PATTERN_NONPORTABLE_VALUE"
+    );
+  }
 
   if (authoredIntent.external_dependency !== undefined) {
     if (typeof authoredIntent.external_dependency !== "string" || !authoredIntent.external_dependency.trim()) {
