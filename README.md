@@ -64,30 +64,42 @@ Supported named directions are `up`, `down`, `left`, `right`, `forward`, and `ba
 
 Raw `paint` remains supported. A request that supplies both `paint` and `surface_rule` is HELD rather than silently choosing an author.
 
+## Render evidence boundary
+
+`npm run evidence:render` turns two existing bounded requests (`facing-up` and `checker`) into reproducible visual evidence using MorphTile's own pinned rasterizer rather than a Surface-private renderer. Each candidate is applied in a disposable MorphTile workspace through clone → edit → plan → commit, rendered with a fixed camera, hashed with `renderReceipt`, encoded with MorphTile's own PNG encoder, and compared against an explicit pixel baseline.
+
+The baseline is a drift sentinel, not an aesthetic score. Matching it proves pixel identity to the reviewed exact-runtime baseline. The generated receipt keeps `visual_judgement: NOT_REVIEWED`; a human/AI observer opening the PNG is a separate evidence class, and `VISUALLY GOOD` remains a separate aesthetic claim. See `docs/RENDER_EVIDENCE.md`.
+
 ## Boundary answers
 
-1. **What it does:** Turns bounded surface intent into candidate MorphTile material facets, including deterministic facing rules, bounded `x|y|z` axis gradients, two MorphTile-backed material patterns, and fail-closed intent normalization.
+1. **What it does:** Turns bounded surface intent into candidate MorphTile material facets, including deterministic facing rules, bounded `x|y|z` axis gradients, two MorphTile-backed material patterns, fail-closed intent normalization, and a separate deterministic render-evidence harness.
 2. **What it does not own:** Geometry topology, arbitrary caller-expression semantics, canonical worlds, merge authority, or automatic aesthetic truth.
 3. **What it accepts:** `axm.morphtile.surface-request/v0.1` in the provisional v0.1 envelope.
-4. **What it produces:** A `morphtile.facet-candidate/v0.4` material candidate.
+4. **What it produces:** A `morphtile.facet-candidate/v0.4` material candidate. The evidence harness separately produces PNG + JSON receipts for fixed reviewed fixtures.
 5. **MorphTile interaction:** output goes through MorphTile's public contracts and clone → plan → commit → receipt → rollback path. MorphTile does not depend on this repository.
-6. **Evidence:** Structural and visual evidence are separate; exact runtime conformance covers facing rules, axis-gradient execution, the caller-paint fixture, and named pattern attenuation while visual quality remains `NOT_TESTED`.
-7. **When it cannot satisfy a request:** malformed or unsupported creation intent returns explicit `HOLD_SURFACE_*` codes; missing external material capability returns `HOLD_MATERIAL_DEPENDENCY_MISSING`.
+6. **Evidence:** Structural/runtime validity, technical rendering, visual observation, and aesthetic quality remain separate. Exact runtime conformance covers facing rules, axis-gradient execution, the caller-paint fixture, named pattern attenuation, and fixed raster evidence; aesthetic quality is not inferred from those receipts.
+7. **When it cannot satisfy a request:** malformed or unsupported creation intent returns explicit `HOLD_SURFACE_*` codes; missing external material capability returns `HOLD_MATERIAL_DEPENDENCY_MISSING`; pixel drift fails the render-evidence path instead of being silently accepted.
 
 ## Run
 
     npm test
 
-Node 18 or later; zero runtime dependencies; no secrets or network required.
+To generate pinned render evidence, provide the exact MorphTile runtime declared in `machine.json` and run:
+
+    npm run evidence:render
+
+Node 18 or later; zero Surface runtime dependencies; no secrets or network required after the two repositories are present locally.
 
 ## Truth boundary
 
-- IMPLEMENTED: fail-closed surface intent normalization, six-direction `facing` compiler, bounded `axis_gradient` compiler, and bounded `checker|stripes` pattern compiler.
-- TESTED: only the claims named by the local and exact cross-repository runtime tests.
-- EXPERIMENTAL: envelope v0.1, surface-rule vocabulary, material-pattern vocabulary, and every candidate schema in this machine.
+- IMPLEMENTED: fail-closed surface intent normalization, six-direction `facing` compiler, bounded `axis_gradient` compiler, bounded `checker|stripes` pattern compiler, and deterministic render-evidence harness.
+- TESTED: only the claims named by the local and exact cross-repository runtime/render tests.
+- EXPERIMENTAL: envelope v0.1, surface-rule vocabulary, material-pattern vocabulary, every candidate schema, and the render-evidence harness in this machine.
 - COMPATIBILITY TARGET: exact MorphTile v0.4 snapshot `ef2b3c6986aa1a333247feffc43a8443f17239d0`.
 - NOT IMPLIED: later MorphTile commits are not covered automatically; compatibility is widened only by rerunning deterministic receipts against an exact identity.
-- NOT TESTED: rendered appearance or aesthetic quality.
-- HELD: no rendered observer or bridge execution in this repository; independent Verification remains separate from producer evidence.
+- RENDERED: fixed `facing-up` and `checker` fixtures have deterministic pixel receipts at the exact pin; matching hashes are drift evidence only.
+- OBSERVED: the first generated artifact was opened during the producer activation and the target tower was visible in both materially distinct frames.
+- NOT ASSESSED: aesthetic quality / `VISUALLY GOOD`.
+- HELD: automatic aesthetic acceptance; independent review of the render-evidence candidate remains separate from producer evidence.
 
 This is a bounded deterministic creation machine, not evidence that MorphTile can autonomously manufacture MorphTile.

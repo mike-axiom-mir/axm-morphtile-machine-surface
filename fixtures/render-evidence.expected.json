@@ -1,0 +1,17 @@
+{
+  "schema": "axm.morphtile.surface-render-baseline/v0.1",
+  "runtime_commit": "ef2b3c6986aa1a333247feffc43a8443f17239d0",
+  "cases": {
+    "facing-up": {
+      "request_id": "surface-facing-up-1",
+      "render_sha256": "54ca8766c52bb13e8a55268f5794a638befc49fc6045189826059e30f327fb1e",
+      "tower_pixels": 1638
+    },
+    "checker": {
+      "request_id": "surface-pattern-checker-1",
+      "render_sha256": "a440cf8410e48730fef743fd1c86bfd88c49e982c912c662a89d68b27549d73d",
+      "tower_pixels": 1638
+    }
+  },
+  "meaning": "These hashes are deterministic drift sentinels for the exact pinned MorphTile rasterizer and fixed evidence camera. Matching them proves pixel identity to the reviewed baseline; it does not prove aesthetic quality."
+}
