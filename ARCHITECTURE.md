@@ -4,9 +4,13 @@
 
 `src/surface-intent.js` owns the creation-side intent boundary. It rejects top-level fields the machine would otherwise ignore, bounds base RGB data, validates the small raw-paint envelope, and keeps caller-authored paint expressions explicitly runtime-owned rather than pretending Surface Machine proved their semantics.
 
-`src/surface-rules.js` owns creation-side surface vocabulary. It compiles six named `facing` directions into MorphTile's existing normal-aware paint expression context (`nx`, `ny`, `nz`). This is machine knowledge: MorphTile already exposes the representation/runtime primitive, so the core does not need a new special case.
+`src/surface-rules.js` owns creation-side directional surface vocabulary. It compiles six named `facing` directions into MorphTile's existing normal-aware paint expression context (`nx`, `ny`, `nz`). This is machine knowledge: MorphTile already exposes the representation/runtime primitive, so the core does not need a new special case.
 
-External dependencies are declared and may HOLD; no bridge is contacted. Invalid or conflicting surface intent and rules HOLD explicitly instead of being repaired or silently ignored.
+`src/surface-patterns.js` owns the bounded creation vocabulary for MorphTile's existing deterministic material patterns. It exposes only `checker` and `stripes`, both already used by ordinary MorphTile matter, and compiles them to the existing `material.data.pattern` plus positive finite `scale` runtime fields. Unsupported names remain explicit HOLDs rather than being mapped to MorphTile's generic fallback/noise branch.
+
+Pattern modulation and procedural paint are orthogonal in MorphTile's runtime: paint determines per-triangle material colors and the named pattern deterministically modulates triangle shading afterwards. Surface Machine therefore permits a pattern to coexist with raw paint or a named surface rule while preserving each author's data.
+
+External dependencies are declared and may HOLD; no bridge is contacted. Invalid or conflicting surface intent, rules and patterns HOLD explicitly instead of being repaired or silently ignored.
 
 Dependency direction is one-way: this machine may consume MorphTile's public contract; MorphTile core must never import this machine. Candidate output is data, not canon. There is no shared protocol package in this pass: the local envelope copy may only be extracted after multiple real machines prove a stable common contract.
 
