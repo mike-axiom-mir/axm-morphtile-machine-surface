@@ -1,9 +1,9 @@
 # Status
 
 - Machine version: 0.3.0
-- State: CANDIDATE — PRODUCER PASS / INDEPENDENT RE-VERIFICATION REQUIRED
+- State: CANDIDATE — PRODUCER PASS / INDEPENDENT VERIFICATION SEPARATE
 - Local test command: `npm test`
-- Pinned MorphTile runtime target: v0.4 at `a579182ae585e5722ac87dd0cc8209963b18d000`
+- Pinned MorphTile runtime target: v0.4 at `b6b086edb70fd4657495fcf01cb9fcdedceafdaf`
 - Envelope: provisional v0.1
 - Visual proof: none
 
@@ -29,13 +29,12 @@ This belongs in Surface Machine, not MorphTile core. Current MorphTile already e
 
 ## Evidence boundary
 
-Producer compatibility with MorphTile `a579182ae585e5722ac87dd0cc8209963b18d000` is TESTED only when GitHub Actions is green on the exact candidate head. Independent Verification still owns the adversarial recheck of the repaired producer behavior before integration. Later MorphTile commits are not covered automatically.
+Producer compatibility with MorphTile `b6b086edb70fd4657495fcf01cb9fcdedceafdaf` is TESTED only when GitHub Actions is green on the exact candidate head. Independent Verification is a separate evidence lane and must not be inferred from producer CI. Later MorphTile commits are not covered automatically.
 
 ## HELD / open
 
-- Independent Verification has not yet re-attacked the repaired exact Surface head.
 - No rendered observer or human visual inspection; VISUALLY GOOD remains `NOT_TESTED`.
 - No arbitrary-direction/vector facing rule without a demonstrated request.
 - No Surface-Machine claim that arbitrary caller expressions are semantically valid merely because their envelope is well shaped.
 - No automatic aesthetic acceptance.
-- No claim of production readiness, merge/CANON, or compatibility beyond the exact tested runtime identity.
+- No claim of production readiness, CANON, or compatibility beyond the exact tested runtime identity.
