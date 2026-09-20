@@ -39,6 +39,22 @@ test("base color is bounded instead of being emitted as unverified material data
   assert.equal(run(outOfRange).holds[0].code, "HOLD_SURFACE_COLOR_INVALID");
 });
 
+test("base color rejects authored numeric lookalikes instead of coercing meaning", () => {
+  for (const [label, bad] of [
+    ["string", "0.2"],
+    ["boolean", false],
+    ["null", null]
+  ]) {
+    const request = clone(facingFixture);
+    request.request_id = "surface-base-color-authored-type-" + label;
+    request.intent.base_color = [bad, 0.25, 0.3];
+    const out = run(request);
+    assert.equal(out.status, "HOLD", label);
+    assert.equal(out.holds[0].code, "HOLD_SURFACE_COLOR_INVALID", label);
+    assert.equal(out.candidate, null, label);
+  }
+});
+
 test("caller paint fails closed on ignored fields, malformed channels and non-numeric vars", () => {
   const unknown = clone(rawFixture);
   unknown.request_id = "surface-paint-unknown";
