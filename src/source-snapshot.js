@@ -88,7 +88,16 @@ function snapshotCompiledAuthoringValue(value, path, code, stack = new Set()) {
       if (!("value" in descriptor)) {
         fail(code, path + "." + name, "uses an accessor instead of plain authored data");
       }
-      out[name] = snapshotCompiledAuthoringValue(descriptor.value, path + "." + name, code, stack);
+      const snapped = snapshotCompiledAuthoringValue(descriptor.value, path + "." + name, code, stack);
+      // Define authored keys as data properties rather than assigning them.
+      // Ordinary assignment gives the special key "__proto__" ambient prototype
+      // semantics instead of preserving the caller's own-key identity.
+      Object.defineProperty(out, name, {
+        value: snapped,
+        enumerable: true,
+        writable: true,
+        configurable: true
+      });
     }
     return out;
   } finally {
