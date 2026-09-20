@@ -19,6 +19,27 @@ function hiddenToJSON(target, replacement, calls) {
   return target;
 }
 
+function trappingProxy(target, calls) {
+  return new Proxy(target, {
+    getPrototypeOf(value) {
+      calls.count += 1;
+      return Reflect.getPrototypeOf(value);
+    },
+    ownKeys(value) {
+      calls.count += 1;
+      return Reflect.ownKeys(value);
+    },
+    getOwnPropertyDescriptor(value, key) {
+      calls.count += 1;
+      return Reflect.getOwnPropertyDescriptor(value, key);
+    },
+    get(value, key, receiver) {
+      calls.count += 1;
+      return Reflect.get(value, key, receiver);
+    }
+  });
+}
+
 function requestWithPaint(expression, requestId) {
   const request = clone(fixture);
   request.request_id = requestId;
@@ -158,6 +179,99 @@ test("caller intent descriptor-gates every authored field before executing acces
     assert.equal(descriptorAfter.enumerable, descriptorBefore.enumerable);
     assert.equal(descriptorAfter.configurable, descriptorBefore.configurable);
   }
+});
+
+test("proxied authored intent fails closed before reflective traps execute", () => {
+  const calls = { count: 0 };
+  const target = {
+    base_color: [0.2, 0.25, 0.3],
+    paint: { color: [0.4, 0.5, 0.6], vars: { gain: 0.2 } }
+  };
+  const request = clone(fixture);
+  request.request_id = "surface-intent-proxy-source-integrity";
+  request.intent = trappingProxy(target, calls);
+
+  const out = run(request);
+
+  assert.equal(calls.count, 0, "intent Proxy traps must not execute before Surface rejects it");
+  assert.equal(out.status, "HOLD");
+  assert.equal(out.holds[0].code, "HOLD_SURFACE_INTENT_NONPORTABLE_VALUE");
+  assert.equal(out.candidate, null);
+  assert.deepEqual(target, {
+    base_color: [0.2, 0.25, 0.3],
+    paint: { color: [0.4, 0.5, 0.6], vars: { gain: 0.2 } }
+  });
+});
+
+test("proxied caller paint fails closed before reflective traps execute", () => {
+  const calls = { count: 0 };
+  const paintTarget = {
+    color: [["+", 0.2, ["*", 0.3, ["var", "ny"]]], 0.55, 0.2],
+    vars: { gain: 0.3 }
+  };
+  const request = clone(fixture);
+  request.request_id = "surface-paint-proxy-source-integrity";
+  request.intent = {
+    base_color: [0.2, 0.25, 0.3],
+    paint: trappingProxy(paintTarget, calls)
+  };
+
+  const out = run(request);
+
+  assert.equal(calls.count, 0, "paint Proxy traps must not execute before Surface rejects it");
+  assert.equal(out.status, "HOLD");
+  assert.equal(out.holds[0].code, "HOLD_SURFACE_PAINT_NONPORTABLE_VALUE");
+  assert.equal(out.candidate, null);
+  assert.deepEqual(paintTarget, {
+    color: [["+", 0.2, ["*", 0.3, ["var", "ny"]]], 0.55, 0.2],
+    vars: { gain: 0.3 }
+  });
+});
+
+test("deep paint Proxy values are rejected without executing traps", () => {
+  const calls = { count: 0 };
+  const expressionTarget = { authored: "opaque-expression" };
+  const expression = trappingProxy(expressionTarget, calls);
+  const request = requestWithPaint(expression, "surface-deep-paint-proxy-source-integrity");
+
+  const out = run(request);
+
+  assert.equal(calls.count, 0, "nested paint Proxy traps must not execute during recursive portability checks");
+  assert.equal(out.status, "HOLD");
+  assert.equal(out.holds[0].code, "HOLD_SURFACE_PAINT_NONPORTABLE_VALUE");
+  assert.match(out.holds[0].detail, /paint\.color\[0\] uses a Proxy/);
+  assert.equal(out.candidate, null);
+  assert.deepEqual(expressionTarget, { authored: "opaque-expression" });
+});
+
+test("revoked intent and paint Proxies reach explicit HOLDs instead of throwing", () => {
+  const revokedIntent = Proxy.revocable({ base_color: [0.2, 0.25, 0.3] }, {});
+  revokedIntent.revoke();
+  const intentRequest = clone(fixture);
+  intentRequest.request_id = "surface-revoked-intent-proxy-source-integrity";
+  intentRequest.intent = revokedIntent.proxy;
+
+  let intentOut;
+  assert.doesNotThrow(() => {
+    intentOut = run(intentRequest);
+  });
+  assert.equal(intentOut.status, "HOLD");
+  assert.equal(intentOut.holds[0].code, "HOLD_SURFACE_INTENT_NONPORTABLE_VALUE");
+  assert.equal(intentOut.candidate, null);
+
+  const revokedPaint = Proxy.revocable({ color: [0.4, 0.5, 0.6], vars: { gain: 0.3 } }, {});
+  revokedPaint.revoke();
+  const paintRequest = clone(fixture);
+  paintRequest.request_id = "surface-revoked-paint-proxy-source-integrity";
+  paintRequest.intent = { base_color: [0.2, 0.25, 0.3], paint: revokedPaint.proxy };
+
+  let paintOut;
+  assert.doesNotThrow(() => {
+    paintOut = run(paintRequest);
+  });
+  assert.equal(paintOut.status, "HOLD");
+  assert.equal(paintOut.holds[0].code, "HOLD_SURFACE_PAINT_NONPORTABLE_VALUE");
+  assert.equal(paintOut.candidate, null);
 });
 
 test("ordinary portable intent remains unchanged across the descriptor preflight", () => {
