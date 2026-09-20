@@ -38,6 +38,27 @@ function rgb(value, field) {
   return value.slice();
 }
 
+function assertFinitePaintNumbers(value, path) {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new SurfaceIntentError(
+        "HOLD_SURFACE_PAINT_NONFINITE_VALUE",
+        path + " contains a non-finite number that cannot be preserved through the portable envelope"
+      );
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertFinitePaintNumbers(item, path + "[" + index + "]"));
+    return;
+  }
+  if (isPlainObject(value)) {
+    for (const [key, item] of Object.entries(value)) {
+      assertFinitePaintNumbers(item, path + "." + key);
+    }
+  }
+}
+
 function normalizePaint(paint) {
   if (!isPlainObject(paint)) {
     throw new SurfaceIntentError("HOLD_SURFACE_PAINT_INVALID", "paint must be an object");
@@ -46,6 +67,7 @@ function normalizePaint(paint) {
   if (!Array.isArray(paint.color) || paint.color.length !== 3) {
     throw new SurfaceIntentError("HOLD_SURFACE_PAINT_INVALID", "paint.color must contain exactly three channel expressions");
   }
+  assertFinitePaintNumbers(paint.color, "paint.color");
   if (paint.vars !== undefined) {
     if (!isPlainObject(paint.vars)) {
       throw new SurfaceIntentError("HOLD_SURFACE_PAINT_VARS_INVALID", "paint.vars must be an object when supplied");
