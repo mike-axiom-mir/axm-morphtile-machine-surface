@@ -95,6 +95,13 @@ function clonePortablePaintValue(value, path, stack = new Set()) {
         path + " contains a non-finite number that cannot be preserved through the portable envelope"
       );
     }
+    // Raw paint is a pass-through grammar whose expression meaning remains
+    // MorphTile-owned. Surface therefore cannot normalize numeric identity on
+    // the caller's behalf. JSON.stringify(-0) produces "0", so accepting -0
+    // here would silently rewrite authored meaning later in result cloning.
+    if (Object.is(value, -0)) {
+      nonportablePaint(path, "contains signed negative zero that portable JSON would rewrite to unsigned zero");
+    }
     return value;
   }
 
