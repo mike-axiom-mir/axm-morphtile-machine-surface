@@ -1,41 +1,39 @@
 # Status
 
-- Foundation version: 0.2.0
-- State: STACKED CANDIDATE — EXACT-HEAD CI REQUIRED
-- Local tests: `npm test`
-- Pinned MorphTile runtime target: v0.4 at `4346df01ed18cd1336064f9323d7766ff4f6338a`
-- Relationship to prior pin: six commits ahead of `13d83a2b2c0d12644442d3d9e45bcbe0af19876a`
+- Machine version: 0.3.0
+- State: CANDIDATE — EXACT-HEAD CI REQUIRED
+- Local test command: `npm test`
+- Pinned MorphTile runtime target: v0.4 at `59ae96ef5394ca4b68441aa7da6e1c4084c48673`
 - Envelope: provisional v0.1
 - Visual proof: none
 
-## Implemented in the parent candidates
+## Implemented
 
 - Six named facing directions compile deterministically to MorphTile normal-aware paint expressions.
-- Thresholds and RGB colors are bounded and malformed rules HOLD explicitly.
-- Raw paint remains available.
-- Raw paint plus `surface_rule` conflicts HOLD rather than silently selecting one author.
+- Thresholds and RGB colors for named facing rules are bounded and malformed rules HOLD explicitly.
+- Top-level surface intent now fails closed on fields the machine would otherwise ignore.
+- `base_color` is validated as a finite RGB triplet in 0..1 before emission.
+- Caller `paint` is bounded to `color` plus optional numeric `vars`; malformed or unknown fields HOLD rather than disappearing silently.
+- Caller-authored paint expressions remain pass-through data, but Surface Machine no longer presents shape validation as proof of expression semantics; candidates carry `CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED`.
+- Runtime conformance exercises all six named facing candidates plus the existing caller-paint fixture through real MorphTile `createTile`, `validateTile`, and `compileMesh`.
 - Structural and visual evidence remain separate; visual evidence is `NOT_TESTED`.
-- Runtime conformance executes all six named facing candidates through real MorphTile `createTile`, `validateTile`, and `compileMesh`.
-- Exact receipts check triangle count, position count, material-color count, and one selected face per named direction.
 
-## Added in this stacked candidate
+## Reusable rule learned
 
-- The declared MorphTile compatibility pin advances to exact main snapshot `4346df01ed18cd1336064f9323d7766ff4f6338a`.
-- CI checks out that exact snapshot and must agree with `machine.json.tested_against.commit`.
-- The same semantic facing receipts are replayed against the newer substrate rather than assuming source compatibility.
+A creation machine must fail closed on intent it would otherwise ignore, and pass-through expressive data must keep its semantic authority with the runtime that actually executes it.
 
 ## Placement decision
 
-This conformance machinery belongs in Surface Machine, not MorphTile core. MorphTile already exposes the normal-aware material paint substrate required by the candidate; this pass verifies creation-side vocabulary against a newer exact substrate identity.
+This belongs in Surface Machine, not MorphTile core. Current MorphTile already exposes the required normal-aware paint expression/runtime substrate. No universal material primitive was missing for this pass.
 
 ## Evidence boundary
 
-Compatibility with MorphTile `4346df01ed18cd1336064f9323d7766ff4f6338a` is TESTED only when GitHub Actions is green on the exact stacked-candidate head. A later MorphTile main commit is not automatically covered.
+Compatibility with MorphTile `59ae96ef5394ca4b68441aa7da6e1c4084c48673` becomes TESTED only when GitHub Actions is green on the exact candidate head. Later MorphTile commits are not covered automatically.
 
 ## HELD / open
 
-- No rendered observer or human visual inspection.
-- No compatibility claim for MorphTile commits newer than the exact tested snapshot.
-- No arbitrary-direction/vector facing rule until a real request demonstrates that need.
+- No rendered observer or human visual inspection; VISUALLY GOOD remains `NOT_TESTED`.
+- No arbitrary-direction/vector facing rule without a demonstrated request.
+- No Surface-Machine claim that arbitrary caller expressions are semantically valid merely because their envelope is well shaped.
 - No automatic aesthetic acceptance.
-- No claim of autonomous creation, production readiness, canon, or visual quality.
+- No claim of production readiness, merge/CANON, or compatibility beyond the exact tested runtime identity.
