@@ -19,6 +19,19 @@ function hiddenToJSON(target, replacement, calls) {
   return target;
 }
 
+function requestWithPaint(expression, requestId) {
+  const request = clone(fixture);
+  request.request_id = requestId;
+  request.intent = {
+    base_color: [0.5, 0.5, 0.5],
+    paint: {
+      color: [expression, 0.55, 0.2],
+      vars: { threshold: 0.6 }
+    }
+  };
+  return request;
+}
+
 test("surface_rule is validated before caller-controlled serialization can rewrite unsupported intent", () => {
   const calls = { count: 0 };
   const authoredRule = hiddenToJSON(
@@ -65,4 +78,32 @@ test("pattern is validated before caller-controlled serialization can rewrite un
   assert.equal(out.candidate, null);
   assert.equal(request.intent.pattern, authoredPattern);
   assert.equal(request.intent.pattern.kind, "noise");
+});
+
+test("caller paint rejects a serialization hook instead of letting transport rewrite an expression", () => {
+  const calls = { count: 0 };
+  const expression = hiddenToJSON({ authored: "opaque-expression" }, ["var", "ny"], calls);
+  const request = requestWithPaint(expression, "surface-paint-tojson-source-integrity");
+
+  const out = run(request);
+
+  assert.equal(calls.count, 0, "paint normalization must not invoke the expression's toJSON hook");
+  assert.equal(out.status, "HOLD");
+  assert.equal(out.holds[0].code, "HOLD_SURFACE_PAINT_NONPORTABLE_VALUE");
+  assert.match(out.holds[0].detail, /paint\.color\[0\]\.toJSON/);
+  assert.equal(out.candidate, null);
+  assert.equal(request.intent.paint.color[0], expression);
+});
+
+test("caller paint rejects values that JSON would silently rewrite to null", () => {
+  const expression = ["+", 0.2, undefined];
+  const request = requestWithPaint(expression, "surface-paint-undefined-source-integrity");
+
+  const out = run(request);
+
+  assert.equal(out.status, "HOLD");
+  assert.equal(out.holds[0].code, "HOLD_SURFACE_PAINT_NONPORTABLE_VALUE");
+  assert.match(out.holds[0].detail, /paint\.color\[0\]\[2\]/);
+  assert.equal(out.candidate, null);
+  assert.equal(request.intent.paint.color[0][2], undefined);
 });
