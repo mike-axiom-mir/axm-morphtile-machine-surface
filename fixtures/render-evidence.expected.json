@@ -1,6 +1,6 @@
 {
   "schema": "axm.morphtile.surface-render-baseline/v0.1",
-  "runtime_commit": "ef2b3c6986aa1a333247feffc43a8443f17239d0",
+  "runtime_commit": "26b89a77f6a90715a6742dc4d084008ba63731b6",
   "cases": {
     "facing-up": {
       "request_id": "surface-facing-up-1",
