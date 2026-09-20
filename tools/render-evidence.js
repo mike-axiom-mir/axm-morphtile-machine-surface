@@ -8,6 +8,7 @@ const facingFixture = require("../fixtures/request.facing-up.json");
 const checkerFixture = require("../fixtures/request.pattern-checker.json");
 const stripesFixture = require("../fixtures/request.pattern-stripes.json");
 const gradientFixture = require("../fixtures/request.axis-gradient.json");
+const baseControlFixture = require("../fixtures/request.base-control.json");
 const expectedBaseline = require("../fixtures/render-evidence.expected.json");
 
 const SURFACE_REPOSITORY = "mike-axiom-mir/axm-morphtile-machine-surface";
@@ -144,18 +145,91 @@ function renderDeterministicObservation(MorphTile, request, label, renderOptions
   };
 }
 
+function measureTargetPixelDelta(subjectFrame, controlFrame, targetId = "mt_tower") {
+  if (!subjectFrame || !controlFrame) fail("effect delta requires subject and control frames");
+  if (subjectFrame.width !== controlFrame.width || subjectFrame.height !== controlFrame.height) {
+    fail("effect delta requires subject and control frames with identical dimensions");
+  }
+  if (typeof subjectFrame.pick !== "function" || typeof controlFrame.pick !== "function") {
+    fail("effect delta requires target picking on subject and control frames");
+  }
+  if (!subjectFrame.pixels || !controlFrame.pixels || subjectFrame.pixels.length !== controlFrame.pixels.length) {
+    fail("effect delta requires comparable subject and control pixel buffers");
+  }
+
+  let targetPixels = 0;
+  let changedTargetPixels = 0;
+  for (let y = 0; y < subjectFrame.height; y += 1) {
+    for (let x = 0; x < subjectFrame.width; x += 1) {
+      const subjectOwnsTarget = subjectFrame.pick(x, y) === targetId;
+      const controlOwnsTarget = controlFrame.pick(x, y) === targetId;
+      if (subjectOwnsTarget !== controlOwnsTarget) {
+        fail(`effect delta target coverage drifted at ${x},${y}`);
+      }
+      if (!subjectOwnsTarget) continue;
+
+      targetPixels += 1;
+      const offset = (y * subjectFrame.width + x) * 4;
+      let changed = false;
+      for (let channel = 0; channel < 4; channel += 1) {
+        if (subjectFrame.pixels[offset + channel] !== controlFrame.pixels[offset + channel]) {
+          changed = true;
+          break;
+        }
+      }
+      if (changed) changedTargetPixels += 1;
+    }
+  }
+
+  if (targetPixels <= 0) fail(`effect delta did not contain target ${targetId}`);
+  return {
+    target_id: targetId,
+    target_pixels: targetPixels,
+    changed_target_pixels: changedTargetPixels
+  };
+}
+
+function attachEffectDelta(observation, control, targetId = "mt_tower") {
+  const delta = measureTargetPixelDelta(observation.frame, control.frame, targetId);
+  if (delta.changed_target_pixels <= 0) {
+    fail(`${observation.receipt.id}: rendered surface effect is pixel-identical to control on ${targetId}`);
+  }
+
+  return {
+    frame: observation.frame,
+    receipt: {
+      ...observation.receipt,
+      effect_delta: {
+        status: "PASS",
+        ...delta,
+        control_id: control.receipt.id,
+        control_request_id: control.receipt.request_id,
+        control_render_sha256: control.receipt.render_sha256
+      },
+      truth_boundary: "Repeated exact-input rendering proves deterministic technical rendering, and the explicit control proves the named surface treatment changes target pixels on the pinned runtime. Neither fact is an aesthetic-quality claim."
+    }
+  };
+}
+
 function buildEvidence(MorphTile, runtimeCommit, producerIdentity) {
   const producer = requireProducerIdentity(producerIdentity);
   const cases = [
     renderCase(MorphTile, facingFixture, "facing-up"),
     renderCase(MorphTile, checkerFixture, "checker")
   ];
-  const observations = [
-    renderDeterministicObservation(MorphTile, gradientFixture, "axis-gradient"),
-    renderDeterministicObservation(MorphTile, stripesFixture, "stripes")
-  ];
 
-  assertUniqueEvidenceIdentities([...cases, ...observations]);
+  const baseControl = renderDeterministicObservation(MorphTile, baseControlFixture, "base-control");
+  baseControl.receipt.evidence_tier = "TECHNICALLY_RENDERED_CONTROL";
+  baseControl.receipt.control_for = ["axis-gradient", "stripes"];
+  baseControl.receipt.truth_boundary = "This deterministic base-only render is an explicit technical control for effect-delta evidence. It has no reviewed-baseline or aesthetic authority.";
+
+  const observations = [
+    attachEffectDelta(renderDeterministicObservation(MorphTile, gradientFixture, "axis-gradient"), baseControl),
+    attachEffectDelta(renderDeterministicObservation(MorphTile, stripesFixture, "stripes"), baseControl)
+  ];
+  const controls = [baseControl];
+
+  assertUniqueEvidenceIdentities([...cases, ...observations, ...controls]);
 
   if (cases[0].receipt.render_sha256 === cases[1].receipt.render_sha256) {
     fail("facing-up and checker evidence unexpectedly produced identical render hashes");
@@ -169,7 +243,7 @@ function buildEvidence(MorphTile, runtimeCommit, producerIdentity) {
   }
 
   return {
-    schema: "axm.morphtile.surface-render-evidence/v0.3",
+    schema: "axm.morphtile.surface-render-evidence/v0.4",
     machine: MACHINE,
     producer,
     runtime: {
@@ -180,7 +254,8 @@ function buildEvidence(MorphTile, runtimeCommit, producerIdentity) {
     visual_quality: "NOT_REVIEWED",
     baseline_scope: cases.map((entry) => entry.receipt.id),
     cases,
-    observations
+    observations,
+    controls
   };
 }
 
@@ -239,7 +314,7 @@ function writeEvidence(outputDir) {
   const pixelBaseline = verifyBaseline(evidence, expectedBaseline, producer);
 
   fs.mkdirSync(outputDir, { recursive: true });
-  for (const entry of [...evidence.cases, ...evidence.observations]) {
+  for (const entry of [...evidence.cases, ...evidence.observations, ...evidence.controls]) {
     fs.writeFileSync(
       path.join(outputDir, `${entry.receipt.id}.png`),
       png.encode(entry.frame.width, entry.frame.height, entry.frame.pixels)
@@ -250,7 +325,8 @@ function writeEvidence(outputDir) {
     ...evidence,
     pixel_baseline: pixelBaseline,
     cases: evidence.cases.map((entry) => entry.receipt),
-    observations: evidence.observations.map((entry) => entry.receipt)
+    observations: evidence.observations.map((entry) => entry.receipt),
+    controls: evidence.controls.map((entry) => entry.receipt)
   };
   fs.writeFileSync(path.join(outputDir, "receipt.json"), `${JSON.stringify(plain, null, 2)}\n`);
   return plain;
@@ -266,12 +342,19 @@ if (require.main === module) {
     producer: receipt.producer,
     runtime: receipt.runtime,
     cases: receipt.cases.map(({ id, render_sha256, tower_pixels }) => ({ id, render_sha256, tower_pixels })),
-    observations: receipt.observations.map(({ id, render_sha256, tower_pixels, deterministic_replay, pixel_baseline }) => ({
+    observations: receipt.observations.map(({ id, render_sha256, tower_pixels, deterministic_replay, pixel_baseline, effect_delta }) => ({
       id,
       render_sha256,
       tower_pixels,
       deterministic_replay,
-      pixel_baseline
+      pixel_baseline,
+      effect_delta
+    })),
+    controls: receipt.controls.map(({ id, render_sha256, tower_pixels, deterministic_replay }) => ({
+      id,
+      render_sha256,
+      tower_pixels,
+      deterministic_replay
     }))
   })}\n`);
 }
@@ -281,6 +364,8 @@ module.exports = {
   applyCandidateToTower,
   renderCase,
   renderDeterministicObservation,
+  measureTargetPixelDelta,
+  attachEffectDelta,
   buildEvidence,
   verifyBaseline,
   writeEvidence,
