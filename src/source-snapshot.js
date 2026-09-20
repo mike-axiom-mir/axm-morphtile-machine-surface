@@ -31,9 +31,12 @@ function snapshotCompiledAuthoringValue(value, path, code, stack = new Set()) {
     fail(code, path, "uses a Proxy instead of plain authored data");
   }
 
+  if (value === undefined) {
+    fail(code, path, "is explicitly undefined and compiled authored data would drop it as if omitted");
+  }
+
   if (
     value === null ||
-    value === undefined ||
     typeof value === "string" ||
     typeof value === "boolean" ||
     typeof value === "number"
@@ -96,9 +99,9 @@ function snapshotCompiledAuthoringValue(value, path, code, stack = new Set()) {
     const out = {};
     for (const name of Object.getOwnPropertyNames(value)) {
       const descriptor = descriptors[name];
-      // Non-enumerable metadata is not part of the compiled authoring grammar.
-      // In particular this strips hidden toJSON hooks without executing them.
-      if (!descriptor.enumerable) continue;
+      if (!descriptor.enumerable) {
+        fail(code, path + "." + name, "is non-enumerable and compiled authored data would drop it as if omitted");
+      }
       if (!("value" in descriptor)) {
         fail(code, path + "." + name, "uses an accessor instead of plain authored data");
       }
