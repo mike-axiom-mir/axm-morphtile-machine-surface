@@ -9,6 +9,20 @@ function fail(code, path, detail) {
   throw error;
 }
 
+function defineAuthoredDataProperty(target, name, value) {
+  // Authored keys are data, including host-language-sensitive names such as
+  // "__proto__". Ordinary assignment can invoke ambient setters instead of
+  // preserving own-key identity, so every Surface source snapshot writes
+  // caller-owned object keys through an explicit inert data descriptor.
+  Object.defineProperty(target, name, {
+    value,
+    enumerable: true,
+    writable: true,
+    configurable: true
+  });
+  return target;
+}
+
 function snapshotCompiledAuthoringValue(value, path, code, stack = new Set()) {
   // Proxy detection must precede Array.isArray, prototype inspection, key
   // enumeration, descriptors, or any direct field access. This also catches
@@ -89,15 +103,7 @@ function snapshotCompiledAuthoringValue(value, path, code, stack = new Set()) {
         fail(code, path + "." + name, "uses an accessor instead of plain authored data");
       }
       const snapped = snapshotCompiledAuthoringValue(descriptor.value, path + "." + name, code, stack);
-      // Define authored keys as data properties rather than assigning them.
-      // Ordinary assignment gives the special key "__proto__" ambient prototype
-      // semantics instead of preserving the caller's own-key identity.
-      Object.defineProperty(out, name, {
-        value: snapped,
-        enumerable: true,
-        writable: true,
-        configurable: true
-      });
+      defineAuthoredDataProperty(out, name, snapped);
     }
     return out;
   } finally {
@@ -105,4 +111,4 @@ function snapshotCompiledAuthoringValue(value, path, code, stack = new Set()) {
   }
 }
 
-module.exports = { snapshotCompiledAuthoringValue };
+module.exports = { defineAuthoredDataProperty, snapshotCompiledAuthoringValue };
