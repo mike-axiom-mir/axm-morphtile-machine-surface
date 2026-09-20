@@ -1,7 +1,7 @@
 "use strict";
 
 const { types: utilTypes } = require("node:util");
-const { snapshotCompiledAuthoringValue } = require("./source-snapshot");
+const { defineAuthoredDataProperty, snapshotCompiledAuthoringValue } = require("./source-snapshot");
 
 const INTENT_FIELDS = Object.freeze(["base_color", "paint", "surface_rule", "pattern", "external_dependency"]);
 const PAINT_FIELDS = Object.freeze(["color", "vars"]);
@@ -71,7 +71,7 @@ function snapshotSurfaceIntent(intent) {
     if (!("value" in descriptor)) {
       nonportableIntent("intent." + name, "uses an accessor instead of portable authored data");
     }
-    out[name] = descriptor.value;
+    defineAuthoredDataProperty(out, name, descriptor.value);
   }
 
   assertOnlyFields(out, INTENT_FIELDS, "HOLD_SURFACE_INTENT_FIELD_UNKNOWN", "intent");
@@ -162,7 +162,8 @@ function clonePortablePaintValue(value, path, stack = new Set()) {
       if (!("value" in descriptor)) {
         nonportablePaint(path + "." + name, "uses an accessor instead of portable authored data");
       }
-      out[name] = clonePortablePaintValue(descriptor.value, path + "." + name, stack);
+      const cloned = clonePortablePaintValue(descriptor.value, path + "." + name, stack);
+      defineAuthoredDataProperty(out, name, cloned);
     }
     return out;
   } finally {
