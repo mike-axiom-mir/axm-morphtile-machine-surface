@@ -6,6 +6,7 @@ const path = require("node:path");
 const { MACHINE, run } = require("../src");
 const facingFixture = require("../fixtures/request.facing-up.json");
 const checkerFixture = require("../fixtures/request.pattern-checker.json");
+const gradientFixture = require("../fixtures/request.axis-gradient.json");
 const expectedBaseline = require("../fixtures/render-evidence.expected.json");
 
 const SURFACE_REPOSITORY = "mike-axiom-mir/axm-morphtile-machine-surface";
@@ -103,19 +104,52 @@ function renderCase(MorphTile, request, label, renderOptions = DEFAULT_RENDER) {
   };
 }
 
+function renderDeterministicObservation(MorphTile, request, label, renderOptions = DEFAULT_RENDER) {
+  const first = renderCase(MorphTile, request, label, renderOptions);
+  const second = renderCase(MorphTile, request, label, renderOptions);
+
+  if (first.receipt.render_sha256 !== second.receipt.render_sha256) {
+    fail(`${label}: repeated exact-input renders produced different pixel hashes`);
+  }
+  if (first.receipt.tower_pixels !== second.receipt.tower_pixels) {
+    fail(`${label}: repeated exact-input renders produced different target coverage`);
+  }
+
+  return {
+    frame: first.frame,
+    receipt: {
+      ...first.receipt,
+      deterministic_replay: "PASS",
+      pixel_baseline: "NOT_ESTABLISHED",
+      evidence_tier: "TECHNICALLY_RENDERED_UNBASELINED",
+      truth_boundary: "Repeated exact-input rendering proves deterministic technical rendering on the pinned runtime. This case has no reviewed pixel baseline and makes no aesthetic-quality claim."
+    }
+  };
+}
+
 function buildEvidence(MorphTile, runtimeCommit, producerIdentity) {
   const producer = requireProducerIdentity(producerIdentity);
   const cases = [
     renderCase(MorphTile, facingFixture, "facing-up"),
     renderCase(MorphTile, checkerFixture, "checker")
   ];
+  const observations = [
+    renderDeterministicObservation(MorphTile, gradientFixture, "axis-gradient")
+  ];
 
   if (cases[0].receipt.render_sha256 === cases[1].receipt.render_sha256) {
     fail("facing-up and checker evidence unexpectedly produced identical render hashes");
   }
+  for (const observation of observations) {
+    for (const reviewed of cases) {
+      if (observation.receipt.render_sha256 === reviewed.receipt.render_sha256) {
+        fail(`${observation.receipt.id}: observation unexpectedly collapsed to reviewed case ${reviewed.receipt.id}`);
+      }
+    }
+  }
 
   return {
-    schema: "axm.morphtile.surface-render-evidence/v0.2",
+    schema: "axm.morphtile.surface-render-evidence/v0.3",
     machine: MACHINE,
     producer,
     runtime: {
@@ -124,7 +158,9 @@ function buildEvidence(MorphTile, runtimeCommit, producerIdentity) {
     },
     status: "TECHNICALLY_RENDERED",
     visual_quality: "NOT_REVIEWED",
-    cases
+    baseline_scope: cases.map((entry) => entry.receipt.id),
+    cases,
+    observations
   };
 }
 
@@ -161,6 +197,7 @@ function verifyBaseline(evidence, baseline = expectedBaseline, expectedProducerI
     status: "PASS",
     producer: expectedProducer,
     runtime_commit: baseline.runtime_commit,
+    reviewed_case_ids: expectedIds,
     meaning: baseline.meaning
   };
 }
@@ -182,7 +219,7 @@ function writeEvidence(outputDir) {
   const pixelBaseline = verifyBaseline(evidence, expectedBaseline, producer);
 
   fs.mkdirSync(outputDir, { recursive: true });
-  for (const entry of evidence.cases) {
+  for (const entry of [...evidence.cases, ...evidence.observations]) {
     fs.writeFileSync(
       path.join(outputDir, `${entry.receipt.id}.png`),
       png.encode(entry.frame.width, entry.frame.height, entry.frame.pixels)
@@ -192,7 +229,8 @@ function writeEvidence(outputDir) {
   const plain = {
     ...evidence,
     pixel_baseline: pixelBaseline,
-    cases: evidence.cases.map((entry) => entry.receipt)
+    cases: evidence.cases.map((entry) => entry.receipt),
+    observations: evidence.observations.map((entry) => entry.receipt)
   };
   fs.writeFileSync(path.join(outputDir, "receipt.json"), `${JSON.stringify(plain, null, 2)}\n`);
   return plain;
@@ -207,7 +245,14 @@ if (require.main === module) {
     pixel_baseline: receipt.pixel_baseline.status,
     producer: receipt.producer,
     runtime: receipt.runtime,
-    cases: receipt.cases.map(({ id, render_sha256, tower_pixels }) => ({ id, render_sha256, tower_pixels }))
+    cases: receipt.cases.map(({ id, render_sha256, tower_pixels }) => ({ id, render_sha256, tower_pixels })),
+    observations: receipt.observations.map(({ id, render_sha256, tower_pixels, deterministic_replay, pixel_baseline }) => ({
+      id,
+      render_sha256,
+      tower_pixels,
+      deterministic_replay,
+      pixel_baseline
+    }))
   })}\n`);
 }
 
@@ -215,6 +260,7 @@ module.exports = {
   DEFAULT_RENDER,
   applyCandidateToTower,
   renderCase,
+  renderDeterministicObservation,
   buildEvidence,
   verifyBaseline,
   writeEvidence,
