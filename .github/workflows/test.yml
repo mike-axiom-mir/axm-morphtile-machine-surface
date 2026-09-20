@@ -10,6 +10,9 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile/core/morphtile.js
+      MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -21,6 +24,9 @@ jobs:
         with:
           node-version: 20
       - run: npm test
-        env:
-          MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile/core/morphtile.js
-          MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
+      - run: npm run evidence:render
+      - uses: actions/upload-artifact@v4
+        with:
+          name: surface-render-evidence
+          path: evidence/surface
+          if-no-files-found: error
