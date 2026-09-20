@@ -1,7 +1,7 @@
 # Status
 
 - Machine version: 0.5.1
-- State: CREATION SEMANTICS + REVIEWED/TECHNICAL RENDER EVIDENCE + NON-FINITE PORTABILITY REPAIRS INTEGRATED; PRE-SERIALIZATION SOURCE-INTEGRITY CANDIDATE OPEN
+- State: CREATION SEMANTICS + REVIEWED/TECHNICAL RENDER EVIDENCE + SOURCE-INTEGRITY REPAIRS INTEGRATED; NESTED COMPILED-AUTHORING SOURCE-INTEGRITY CANDIDATE OPEN
 - Local test command: `npm test`
 - Render evidence command: `npm run evidence:render`
 - Exact tested MorphTile runtime target: v0.4 at `26b89a77f6a90715a6742dc4d084008ba63731b6`
@@ -22,25 +22,33 @@
 - Reviewed pixel authority remains exactly `facing-up` + `checker`.
 - `axis-gradient` and `stripes` are integrated as `TECHNICALLY_RENDERED_UNBASELINED` observations with explicit base-control effect-delta evidence; neither has reviewed pixel-baseline or aesthetic authority.
 - Surface PR #13 integrated the exact `26b89a77f6a90715a6742dc4d084008ba63731b6` runtime re-pin plus control-relative target-pixel effect evidence.
-- Surface PR #14 integrated rejection of non-finite derived gradient spans and nested non-finite caller paint before portable JSON transport can rewrite authored values. Independent Verification passed exact PR #14 head `c2c4d0a6e77945c0828abd76d4805049c4bde982`; Surface main after integration is `1d5e13ec10245d7754d04612807fad095dc81500`.
+- Surface PR #14 integrated rejection of non-finite derived gradient spans and nested non-finite caller paint before portable JSON transport can rewrite authored values. Independent Verification passed exact PR #14 head `c2c4d0a6e77945c0828abd76d4805049c4bde982`.
+- Surface PR #15 integrated pre-serialization source integrity for the caller-owned intent and raw-paint boundaries, including accessor/Proxy rejection before caller code can execute. Independent Verification round 4 passed exact repaired head `3026016693e1132c219876c92cd24b801aa7d25f`; PR #15 merged as Surface main `5184275314503333912cf30c97c203323a1ab7e1`, and post-merge CI passed.
 
-## Current candidate — pre-serialization source integrity
+## Current candidate — nested compiled-authoring source integrity
 
-Surface PR #15 does not widen material vocabulary. It closes the remaining observed authoring/transport rewrite class before portable emission.
-
-Before this candidate, `surface_rule` and `pattern` were JSON-cloned before their domain compilers validated the authored request. A caller-controlled `toJSON` hook could therefore replace unsupported authored intent with supported data before validation. Caller paint had already gained non-finite guards, but other non-portable values and nested serialization hooks could still be rewritten, dropped or rejected by JSON after Surface's structural checks.
+Surface PR #16 does not widen material vocabulary. It closes a deeper source boundary left after PR #15: `base_color`, `surface_rule`, and `pattern` could still contain caller-controlled Proxies, accessors, sparse arrays or other nested authored structures that their semantic compilers would read directly after the top-level intent envelope had passed.
 
 The candidate therefore:
 
-- sends authored `surface_rule` and `pattern` values to their existing domain validators before any serialization step;
-- copies caller paint through a bounded portable-data copier that never invokes `toJSON`;
-- preserves the existing `HOLD_SURFACE_PAINT_NONFINITE_VALUE` boundary for non-finite numbers;
-- adds `HOLD_SURFACE_PAINT_NONPORTABLE_VALUE` for values that portable JSON would rewrite, drop or reject, including unsupported value types, sparse arrays, accessors, symbol-keyed properties, cycles, non-plain objects and non-enumerable authored object fields;
-- keeps MorphTile-owned expression semantics runtime-owned rather than pretending transport validity proves expression correctness.
+- snapshots compiled authoring data recursively before domain compilers read nested fields;
+- detects live or revoked Proxies before `Array.isArray`, prototype inspection, key enumeration or descriptors can cross the caller boundary;
+- rejects enumerable accessor-backed rule/pattern fields and accessor-backed array channels without executing them;
+- rejects sparse authored arrays before a later JSON transport can manufacture `null` channels;
+- strips hidden non-enumerable metadata such as `toJSON` from the compiled semantic snapshot without executing it, preserving the existing rule that hidden serialization hooks cannot rewrite authored meaning;
+- keeps ordinary portable rule/pattern/base-colour data on the existing semantic compiler path, so domain validation remains responsible for direction, range, color and pattern meaning.
+
+Regression-only head `88456cc862d31c451da38d01f51c71799ead2b7b` failed `npm test` as expected before the repair. Producer CI must pass again on the final exact PR #16 head after every candidate mutation before `TECHNICALLY VALID` is claimed.
 
 No MorphTile-core material primitive is missing for this repair.
 
 ## Reusable rules learned
+
+**Source-integrity boundaries are recursive.** A top-level descriptor/Proxy gate is incomplete if a later semantic compiler directly reads nested caller-owned objects or arrays. Every ownership boundary must be converted to a trap-free plain-data snapshot before semantic reads begin.
+
+**Compiled authoring and pass-through authoring have different preservation duties.** Raw paint is transported onward and therefore must preserve its complete portable meaning. Named rule/pattern authoring is compiled into a new normalized representation, so hidden non-enumerable metadata is outside that grammar and may be discarded only after proving it cannot execute.
+
+**Sparse arrays are authored ambiguity, not valid RGB.** Array iteration can skip holes while JSON later rewrites those holes to `null`; Surface must HOLD before transport invents a channel value.
 
 **Validate authorship before transport.** Serialization is not validation. A transport hook or coercion must never be able to turn unsupported authored surface intent into supported machine intent.
 
@@ -54,22 +62,23 @@ No MorphTile-core material primitive is missing for this repair.
 
 ## Placement decision
 
-The current candidate belongs in Surface Machine. It is creation-side authoring and portable-envelope integrity around material data. MorphTile already provides the universal material substrate: base color, `emissive`, `glow`, `checker|stripes|noise`, per-triangle paint with `x/y/z`, `nx/ny/nz` and `up`, plus deterministic rendering. No bounded MorphTile-core Surface candidate is justified by this activation.
+The current candidate belongs in Surface Machine. It is creation-side source integrity around Surface-owned material authoring before existing Surface semantic compilers run. MorphTile already provides the universal material substrate: base color, `emissive`, `glow`, `checker|stripes|noise`, per-triangle paint with `x/y/z`, `nx/ny/nz` and `up`, plus deterministic rendering. No bounded MorphTile-core Surface candidate is justified by this activation.
 
 The current MorphTile main move to `429a344f7d9333bef01cf9de1c292c3af09abec2` is the merged universal compiled-mesh non-finite boundary. It is not evidence of a missing Surface representation primitive and is not mechanically re-pinned here merely to create activity.
 
 ## Evidence boundary
 
-- Integrated Surface baseline before PR #15: `1d5e13ec10245d7754d04612807fad095dc81500`.
-- Independent Verification passed the integrated PR #14 repair before Director integration.
-- Producer CI for PR #15 must pass on the final exact candidate head after every candidate mutation before `TECHNICALLY VALID` is claimed for that head.
-- Independent Verification of PR #15 remains separate from producer CI.
-- Existing reviewed render evidence and technical observation evidence may stay green without implying that this transport repair changed appearance.
+- Integrated Surface baseline before PR #16: `5184275314503333912cf30c97c203323a1ab7e1`.
+- Independent Verification round 4 passed the exact repaired PR #15 head before Creation Director integration.
+- Regression-only PR #16 head `88456cc862d31c451da38d01f51c71799ead2b7b`: Actions run `35527508876` = FAILURE at `npm test`, preserving the nested-authoring gap before repair.
+- Producer CI for PR #16 must pass on the final exact candidate head after every candidate mutation before `TECHNICALLY VALID` is claimed for that head.
+- Independent Verification of PR #16 remains separate from producer CI.
+- Existing reviewed render evidence and technical observation evidence may stay green without implying that this source-integrity repair changed appearance.
 - `VISUALLY GOOD` remains `NOT_ASSESSED`.
 
 ## HELD / open
 
-- Independent Verification and Creation Director integration of Surface PR #15.
+- Independent Verification and Creation Director integration of Surface PR #16.
 - Compatibility beyond exact tested MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`.
 - Any promotion of gradient, stripes or base-control pixels into reviewed-baseline authority.
 - `VISUALLY GOOD` / aesthetic acceptance.
