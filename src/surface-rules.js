@@ -107,6 +107,12 @@ function compileAxisGradient(rule) {
   const start = rgb(rule.start_color, "start_color");
   const end = rgb(rule.end_color, "end_color");
   const span = to - from;
+  if (!Number.isFinite(span) || span <= 0) {
+    throw new SurfaceRuleError(
+      "HOLD_SURFACE_RULE_RANGE_INVALID",
+      "axis_gradient derived span must remain a positive finite number"
+    );
+  }
   const position = ["var", rule.axis];
   const interiorT = ["/", ["-", JSON.parse(JSON.stringify(position)), from], span];
   const color = start.map((channel, index) => {
