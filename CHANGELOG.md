@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 — 2026-09-20
+
+- Added a bounded creation-side material pattern vocabulary for MorphTile's existing `checker` and `stripes` runtime semantics.
+- Pattern scale defaults to `0.5` only when omitted and otherwise requires an authored positive finite number; numeric-looking non-number values fail closed.
+- Unknown pattern fields and unsupported names return explicit HOLDs rather than falling through to MorphTile's generic pattern/noise implementation branch.
+- Kept pattern modulation orthogonal to procedural paint and named facing rules instead of silently replacing either authoring layer.
+- Added exact runtime receipts proving named patterns preserve geometry positions and procedural-paint colors while applying only their declared deterministic triangle attenuation factors.
+- Advanced the exact MorphTile compatibility pin to `ef2b3c6986aa1a333247feffc43a8443f17239d0` for this candidate; compatibility remains replay-earned.
+- Preserved TECHNICALLY VALID vs VISUALLY GOOD as separate evidence classes.
+
 ## 0.3.0 — 2026-09-20
 
 - Director review additionally repaired explicit falsey `surface_rule` values: only omission selects default paint; authored invalid rules HOLD. Eighteen tests and the independent Verification boundary check pass after this repair.
