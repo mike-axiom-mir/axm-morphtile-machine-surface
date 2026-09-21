@@ -1,5 +1,7 @@
 "use strict";
 
+const { canonicalizeCompiledNumber } = require("./surface-numeric");
+
 const DIRECTIONS = Object.freeze({
   up: Object.freeze({ variable: "ny", sign: 1 }),
   down: Object.freeze({ variable: "ny", sign: -1 }),
@@ -35,7 +37,7 @@ function authoredFiniteNumber(value, code, message) {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new SurfaceRuleError(code, message);
   }
-  return value;
+  return canonicalizeCompiledNumber(value);
 }
 
 function rgb(value, field) {
@@ -48,7 +50,7 @@ function rgb(value, field) {
       field + " channels must be authored as finite numbers from 0 to 1"
     );
   }
-  return value.slice();
+  return value.map(canonicalizeCompiledNumber);
 }
 
 function facingExpression(direction) {
@@ -62,19 +64,24 @@ function facingExpression(direction) {
 
 function compileFacing(rule) {
   assertOnlyFields(rule, FACING_FIELDS);
-  const direction = rule.direction;
-  const threshold = rule.threshold === undefined ? 0.6 : rule.threshold;
-  if (typeof threshold !== "number" || !Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
+  const authoredThreshold = rule.threshold === undefined ? 0.6 : rule.threshold;
+  if (
+    typeof authoredThreshold !== "number" ||
+    !Number.isFinite(authoredThreshold) ||
+    authoredThreshold < 0 ||
+    authoredThreshold > 1
+  ) {
     throw new SurfaceRuleError(
       "HOLD_SURFACE_RULE_THRESHOLD_INVALID",
       "facing threshold must be authored as a finite number from 0 to 1"
     );
   }
+  const threshold = canonicalizeCompiledNumber(authoredThreshold);
   const match = rgb(rule.match_color, "match_color");
   const otherwise = rgb(rule.else_color, "else_color");
-  const test = [">=", facingExpression(direction), threshold];
+  const test = [">=", facingExpression(rule.direction), threshold];
   return {
-    normalized: { kind: "facing", direction, threshold, match_color: match, else_color: otherwise },
+    normalized: { kind: "facing", direction: rule.direction, threshold, match_color: match, else_color: otherwise },
     paint: {
       color: match.map((channel, index) => ["if", JSON.parse(JSON.stringify(test)), channel, otherwise[index]])
     }
