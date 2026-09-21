@@ -209,6 +209,18 @@ function assertRequest(request) {
 function result(request, machine, status, fields = {}) {
   const safeRequest = assertRequest(request);
   if (!STATUSES.has(status)) throw new Error("invalid result status");
+
+  // Provenance is portable authored data, so presence—not JavaScript
+  // truthiness—decides whether an override/request value wins. Values such as
+  // null, false, 0, and "" were admitted by the request grammar and must not
+  // be silently rewritten to the absent-value default.
+  const provenance =
+    fields.provenance !== undefined
+      ? fields.provenance
+      : safeRequest.provenance !== undefined
+        ? safeRequest.provenance
+        : {};
+
   return {
     envelope_version: ENVELOPE_VERSION,
     request_id: safeRequest.request_id,
@@ -219,7 +231,7 @@ function result(request, machine, status, fields = {}) {
     evidence: clone(fields.evidence || []),
     warnings: clone(fields.warnings || []),
     holds: clone(fields.holds || []),
-    provenance: clone(fields.provenance || safeRequest.provenance || {}),
+    provenance: clone(provenance),
     suggested_missing_capability: fields.suggested_missing_capability || null
   };
 }
