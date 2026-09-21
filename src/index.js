@@ -67,7 +67,20 @@ function run(request) {
     }
   }
 
-  paint = paint || { color: [["if", [">", ["var", "ny"], 0.6], 0.9, 0.25], 0.55, 0.2] };
+  // An explicitly authored base color is already complete ordinary material
+  // authorship. Do not add the legacy procedural fallback when base_color is
+  // the only visual treatment: that would turn the documented base-only
+  // control into an unrequested normal-driven paint effect. Pattern behavior
+  // stays unchanged here because reviewed checker evidence currently binds that
+  // composition and changing it would require a separate visual-review lane.
+  const authoredBaseOnly =
+    intent.base_color !== undefined &&
+    intent.paint === undefined &&
+    intent.surface_rule === undefined &&
+    normalizedPattern === null;
+  if (!paint && !authoredBaseOnly) {
+    paint = { color: [["if", [">", ["var", "ny"], 0.6], 0.9, 0.25], 0.55, 0.2] };
+  }
 
   const evidence = [];
   const warnings = [];
@@ -87,6 +100,12 @@ function run(request) {
     warnings.push({
       code: "CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED",
       detail: "caller-authored paint expressions are preserved but their runtime meaning belongs to MorphTile"
+    });
+  } else if (authoredBaseOnly) {
+    evidence.push({
+      kind: "STRUCTURAL",
+      status: "PASS",
+      check: "authored base color emitted without inventing a procedural paint treatment"
     });
   } else {
     evidence.push({
