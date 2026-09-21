@@ -3,7 +3,7 @@
 Tested contract target:
 
 - repository: mike-axiom-mir/axm-morphtile
-- commit: ef2b3c6986aa1a333247feffc43a8443f17239d0
+- commit: 26b89a77f6a90715a6742dc4d084008ba63731b6
 - format: v0.4
 - provisional envelope: v0.1
 - fixture set: v0.5.1

@@ -159,6 +159,19 @@ function snapshotRequest(request) {
     failRequest("request", "uses a non-plain object instead of a portable request envelope");
   }
 
+  // The provisional v0.1 request envelope has an exact top-level grammar.
+  // Snapshotting only known names would silently reinterpret every other own
+  // key as omission, including hidden or symbol-keyed authored data that JSON
+  // cannot carry. Establish own-key admissibility before selecting fields.
+  if (Object.getOwnPropertySymbols(request).length) {
+    failRequest("request", "contains symbol-keyed properties outside the v0.1 request-envelope grammar");
+  }
+  const ownNames = Object.getOwnPropertyNames(request);
+  const unexpected = ownNames.filter((name) => !REQUEST_FIELDS.includes(name)).sort();
+  if (unexpected.length) {
+    failRequest("request." + unexpected[0], "is not part of the v0.1 request-envelope grammar");
+  }
+
   const descriptors = Object.getOwnPropertyDescriptors(request);
   const out = {};
   for (const name of REQUEST_FIELDS) {

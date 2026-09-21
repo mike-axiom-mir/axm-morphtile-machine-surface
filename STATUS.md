@@ -1,7 +1,7 @@
 # Status
 
 - Machine version: 0.5.1
-- State: CREATION SEMANTICS + REVIEWED/TECHNICAL RENDER EVIDENCE + SOURCE-INTEGRITY REPAIRS THROUGH PR #23 INTEGRATED; REQUEST-ENVELOPE SOURCE-INTEGRITY CANDIDATE OPEN
+- State: CREATION SEMANTICS + REVIEWED/TECHNICAL RENDER EVIDENCE + SOURCE-INTEGRITY REPAIRS THROUGH PR #24 INTEGRATED; REQUEST-ENVELOPE OWN-KEY IDENTITY CANDIDATE OPEN
 - Local test command: `npm test`
 - Render evidence command: `npm run evidence:render`
 - Exact tested MorphTile runtime target: v0.4 at `26b89a77f6a90715a6742dc4d084008ba63731b6`
@@ -31,23 +31,28 @@
 - PR #20 integrated signed-negative-zero rejection for raw pass-through paint before JSON transport can erase its sign identity.
 - PR #21 integrated explicit signed-zero canonicalization for machine-owned compiled `base_color`, facing and `axis_gradient` numeric meaning. Independent Verification round 11 passed exact candidate `3e43c003a0dc54f7ae877767fd2c3dff9daaa39d`; Creation Director then merged it to Surface main `ccddcb8030125a2a93acd33365bab700b62b37d7`.
 - PR #23 integrated coercion-free Surface rule discriminators. Independent Verification round 12 passed exact candidate `3dfe1ce0fdadbf83fa330a088429ed3806c14583`; Creation Director then merged it to Surface main `5e29c258a92f522374f6819e2b470582865f8557`.
+- PR #24 integrated the trap-free outer request-envelope boundary, dense real-array capability semantics and recursively portable provenance. Independent Verification passed exact candidate `e37fc547f8ccdbfdf8ac49c9ca48458469fad453` via Verification PR #39 / verifier head `aae4fde440ee925d25b566ee92cd50898088645c` / targeted Actions `35554638541`; Creation Director then merged it to Surface main `3b349b70567ef3758bf951a08f2aa5e65ae56a86`.
 
-## Current candidate — request-envelope source integrity
+## Current candidate — request-envelope own-key identity
 
-The inner Surface intent boundary is now descriptor-safe, Proxy-safe and recursive, but one ownership boundary remained outside it. `run()` still read `request.intent` directly after a shallow `assertRequest()`, dependency lookup called `.includes()` directly on caller-owned `request.available_capabilities`, and `result()` JSON-cloned caller-owned provenance. Those reads could execute request-level accessors or Proxy traps before Surface had decided whether the envelope was admissible. A string supplied as `available_capabilities` could also inherit JavaScript `String.prototype.includes` semantics and masquerade as a capability list.
+PR #24 made the request envelope trap-free before Surface reads known fields, but `snapshotRequest()` still selected only the six named v0.1 fields. Any other caller-authored own string key was ignored, and symbol-keyed request data was never examined. That silently reinterpreted authored presence as omission one layer outside the already strict intent grammar. The loss affected enumerable unknown fields, non-enumerable unknown fields and symbol-keyed data even though the provisional v0.1 envelope exposes an explicit top-level field set.
 
-Surface PR #24 therefore:
+Surface PR #25 therefore:
 
-- preserves fail-first regressions for a request-level `intent` accessor, a root request Proxy, an `available_capabilities` Proxy and provenance accessors;
-- establishes a trap-free request-envelope snapshot before Surface reads intent, capability availability or provenance;
-- requires `available_capabilities` to be a dense plain array of string capability ids before dependency lookup, while retaining an ordinary-array control;
-- snapshots provenance as portable plain data before result transport rather than letting JSON serialization execute caller-owned behavior;
-- keeps the existing deeper intent/paint/rule/pattern source boundaries intact instead of replacing them;
-- changes no surface vocabulary, MorphTile runtime primitive, compatibility pin, reviewed pixel authority or aesthetic judgement.
+- preserves fail-first regressions for an enumerable unknown request field, a hidden unknown request field and a symbol-keyed request field, plus an ordinary v0.1 control;
+- rejects symbol-keyed request data before portable transport can drop it;
+- inspects all own string names before selecting known v0.1 fields and deterministically HOLDs the first unsupported name;
+- leaves caller-owned unknown data/descriptors untouched;
+- keeps the request Proxy gate first, so own-key inspection does not execute caller-controlled Proxy traps;
+- changes no material vocabulary, MorphTile runtime primitive, compatibility claim, reviewed pixel authority or aesthetic judgement.
 
-Fail-first evidence is preserved at exact test-only head `f0c59f6b56b93010c1f5a102eb99fa409895e617`. Actions run `35552717637` failed `npm test` with the four new request-boundary regressions failing before the repair; render/evidence stages were correctly skipped. Exact repaired-head producer and render evidence must remain authoritative after every later candidate mutation.
+Fail-first evidence is preserved at exact test-only head `ae94524e9b8a02b86f8f24bc7bdec38003518799`. Actions run `35555952139` failed at `npm test`; render/evidence and artifact upload were correctly skipped. The repaired code head `abe469a9c586906e901ac6f51a7a72a770030b21` passed Actions `35556009152`, including `npm test`, the real pinned `npm run evidence:render`, and evidence upload. Artifact `10620004492` has digest `sha256:9ec0aa308345ad34b1ffe4baaff8896700213b2e2a5ccfe7014baaf798fa86f1`.
+
+This activation also repaired one independent continuity contradiction: `INTEGRATION.md` still named the older `ef2b3c...` runtime despite `machine.json`, README and this status already pinning exact MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`. The integration contract now names the manifest pin. Because documentation commits move the candidate head, exact final-head CI/render evidence must be replayed after these continuity updates before producer PASS is claimed for the final head.
 
 ## Reusable rules learned
+
+**An exact envelope grammar must account for every caller-owned own key before selecting the fields it understands.** Trap-free reads are incomplete if unknown own names or symbols can simply disappear. When the grammar has no extension field, unsupported own-key presence must HOLD rather than become omission.
 
 **Source integrity must begin before the first caller-owned read, including the outer request envelope.** Protecting `intent` recursively is incomplete if `request.intent`, capability availability or provenance can execute caller code one ownership boundary earlier. Metadata used for machine decisions or later transport must first become inert plain data under its own grammar.
 
@@ -83,22 +88,23 @@ Fail-first evidence is preserved at exact test-only head `f0c59f6b56b93010c1f5a1
 
 ## Placement decision
 
-The current candidate belongs in Surface Machine. It repairs how the Surface producer establishes its own caller/request boundary before compiling material intent. MorphTile v0.4 already defines the universal ordinary material substrate: base color, optional `emissive`, `glow`, `checker|stripes|noise` + scale, and per-triangle paint with `x/y/z`, `nx/ny/nz` and `up`, plus deterministic rendering. No missing universal material representation/runtime primitive was demonstrated, so no MorphTile-core candidate is justified.
+The current candidate belongs in Surface Machine. It repairs how the Surface producer applies its own provisional request-envelope grammar before compiling material intent. MorphTile v0.4 already defines the universal ordinary material substrate: base color, optional `emissive`, `glow`, `checker|stripes|noise` + scale, and per-triangle paint with `x/y/z`, `nx/ny/nz` and `up`, plus deterministic rendering. No missing universal material representation/runtime primitive was demonstrated, so no MorphTile-core candidate is justified.
 
 Surface remains deliberately pinned to exact tested MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`; current-core freshness alone is not a reason to manufacture compatibility churn.
 
 ## Evidence boundary
 
-- Integrated Surface baseline before PR #24: `5e29c258a92f522374f6819e2b470582865f8557`.
-- Fail-first PR #24 head `f0c59f6b56b93010c1f5a102eb99fa409895e617`, Actions `35552717637`: 260 PASS / 4 FAIL, with exactly the four new request-envelope regressions failing; render/evidence stages skipped.
-- Producer CI and the real render-evidence path must pass on every exact repaired candidate head before `TECHNICALLY VALID` is claimed for that head.
+- Integrated Surface baseline before PR #25: `3b349b70567ef3758bf951a08f2aa5e65ae56a86`.
+- Fail-first PR #25 head `ae94524e9b8a02b86f8f24bc7bdec38003518799`, Actions `35555952139`: `npm test` failed on the new request-own-key regressions; render/evidence and upload skipped.
+- Repaired code head `abe469a9c586906e901ac6f51a7a72a770030b21`, Actions `35556009152`: `npm test`, real pinned `npm run evidence:render`, and artifact upload PASS; artifact `10620004492`, digest `sha256:9ec0aa308345ad34b1ffe4baaff8896700213b2e2a5ccfe7014baaf798fa86f1`.
+- Producer CI and the real render-evidence path must pass on the final exact candidate head after continuity-document updates before `TECHNICALLY VALID` is claimed for that final head.
 - Independent Verification remains separate from producer CI.
 - Existing reviewed render evidence and technical observation evidence may remain green without implying this request-boundary repair improved appearance.
 - `VISUALLY GOOD` remains `NOT_ASSESSED`.
 
 ## HELD / open
 
-- Independent Verification and Creation Director integration of Surface PR #24.
+- Independent Verification and Creation Director integration of Surface PR #25.
 - Compatibility beyond exact tested MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`.
 - Any promotion of gradient, stripes or base-control pixels into reviewed-baseline authority.
 - `VISUALLY GOOD` / aesthetic acceptance.
