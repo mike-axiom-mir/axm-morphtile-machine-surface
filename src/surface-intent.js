@@ -2,6 +2,7 @@
 
 const { types: utilTypes } = require("node:util");
 const { defineAuthoredDataProperty, snapshotCompiledAuthoringValue } = require("./source-snapshot");
+const { canonicalizeCompiledNumber } = require("./surface-numeric");
 
 const INTENT_FIELDS = Object.freeze(["base_color", "paint", "surface_rule", "pattern", "external_dependency"]);
 const PAINT_FIELDS = Object.freeze(["color", "vars"]);
@@ -38,7 +39,7 @@ function rgb(value, field) {
       field + " channels must be authored as finite numbers from 0 to 1"
     );
   }
-  return value.slice();
+  return value.map(canonicalizeCompiledNumber);
 }
 
 function nonportableIntent(path, detail) {
