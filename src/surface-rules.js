@@ -63,10 +63,13 @@ function facingExpression(direction) {
       "surface_rule.direction must be one of: " + Object.keys(DIRECTIONS).join(", ")
     );
   }
-  const spec = DIRECTIONS[direction];
-  if (!spec) {
+  // A named registry is an exact grammar. Prototype-chain properties such as
+  // constructor, toString, and __proto__ are host-language behavior, not
+  // declared Surface directions, so require own-key membership before lookup.
+  if (!Object.prototype.hasOwnProperty.call(DIRECTIONS, direction)) {
     throw new SurfaceRuleError("HOLD_SURFACE_RULE_DIRECTION_UNKNOWN", "unknown facing direction: " + direction);
   }
+  const spec = DIRECTIONS[direction];
   const normal = ["var", spec.variable];
   return spec.sign === 1 ? normal : ["*", -1, normal];
 }
