@@ -15,7 +15,10 @@ function hold(request, error, fallbackCode) {
 }
 
 function run(request) {
-  assertRequest(request);
+  // Establish a trap-free request-envelope view before Surface reads intent,
+  // capability availability, provenance, or any other caller-owned envelope
+  // field. Intent keeps its own deeper Surface-specific source boundary.
+  request = assertRequest(request);
 
   let intent;
   try {
