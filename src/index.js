@@ -4,6 +4,7 @@ const { assertRequest, result } = require("./envelope");
 const { SurfaceIntentError, normalizeSurfaceIntent } = require("./surface-intent");
 const { SurfaceRuleError, compileSurfaceRule } = require("./surface-rules");
 const { SurfacePatternError, compileSurfacePattern } = require("./surface-patterns");
+const { createDefaultPaint } = require("./surface-defaults");
 const MACHINE = { id: "axm.morphtile.machine.surface", version: "0.5.1" };
 
 function hold(request, error, fallbackCode) {
@@ -79,7 +80,7 @@ function run(request) {
     intent.surface_rule === undefined &&
     normalizedPattern === null;
   if (!paint && !authoredBaseOnly) {
-    paint = { color: [["if", [">", ["var", "ny"], 0.6], 0.9, 0.25], 0.55, 0.2] };
+    paint = createDefaultPaint();
   }
 
   const evidence = [];
