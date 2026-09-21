@@ -1,7 +1,7 @@
 # Status
 
 - Machine version: 0.5.1
-- State: CREATION SEMANTICS + REVIEWED/TECHNICAL RENDER EVIDENCE + SOURCE-INTEGRITY REPAIRS THROUGH PR #24 INTEGRATED; REQUEST-ENVELOPE OWN-KEY IDENTITY CANDIDATE OPEN
+- State: CREATION SEMANTICS + REVIEWED/TECHNICAL RENDER EVIDENCE + SOURCE-INTEGRITY REPAIRS THROUGH PR #28 INTEGRATED; BASE-ONLY AUTHORSHIP CANDIDATE OPEN
 - Local test command: `npm test`
 - Render evidence command: `npm run evidence:render`
 - Exact tested MorphTile runtime target: v0.4 at `26b89a77f6a90715a6742dc4d084008ba63731b6`
@@ -20,37 +20,44 @@
 - Caller-authored paint remains pass-through data with `CALLER_PAINT_RUNTIME_VALIDATION_REQUIRED`; Surface does not confuse envelope shape with runtime semantic proof.
 - Reviewed render evidence uses MorphTile's real pinned rasterizer and keeps producer identity, runtime identity, reviewed pixel identity, visual observation and aesthetic quality separate.
 - Reviewed pixel authority remains exactly `facing-up` + `checker`.
-- `axis-gradient` and `stripes` are integrated as `TECHNICALLY_RENDERED_UNBASELINED` observations with explicit base-control effect-delta evidence; neither has reviewed pixel-baseline or aesthetic authority.
-- PR #13 integrated the exact runtime re-pin plus control-relative target-pixel effect evidence.
-- PR #14 integrated rejection of non-finite derived gradient spans and nested non-finite caller paint before portable JSON transport can rewrite authored values.
-- PR #15 integrated pre-serialization source integrity for caller-owned intent and raw paint, including accessor/Proxy rejection before caller code can execute.
-- PR #16 integrated recursive compiled-authoring source protection for `base_color`, `surface_rule`, and `pattern`, including Proxy/accessor/sparse-array handling and inert own-key writes.
-- PR #17 extended inert own-key preservation across remaining intent and raw-paint snapshot boundaries.
-- PR #18 promoted independently verified inherited-looking own-key cases into permanent producer regressions.
-- PR #19 integrated authored-presence semantics: explicit `undefined` and hidden compiled semantic data can no longer collapse into omission/defaulting, while the established hidden `toJSON` metadata exception remains narrow and inert.
-- PR #20 integrated signed-negative-zero rejection for raw pass-through paint before JSON transport can erase its sign identity.
-- PR #21 integrated explicit signed-zero canonicalization for machine-owned compiled `base_color`, facing and `axis_gradient` numeric meaning. Independent Verification round 11 passed exact candidate `3e43c003a0dc54f7ae877767fd2c3dff9daaa39d`; Creation Director then merged it to Surface main `ccddcb8030125a2a93acd33365bab700b62b37d7`.
-- PR #23 integrated coercion-free Surface rule discriminators. Independent Verification round 12 passed exact candidate `3dfe1ce0fdadbf83fa330a088429ed3806c14583`; Creation Director then merged it to Surface main `5e29c258a92f522374f6819e2b470582865f8557`.
-- PR #24 integrated the trap-free outer request-envelope boundary, dense real-array capability semantics and recursively portable provenance. Independent Verification passed exact candidate `e37fc547f8ccdbfdf8ac49c9ca48458469fad453` via Verification PR #39 / verifier head `aae4fde440ee925d25b566ee92cd50898088645c` / targeted Actions `35554638541`; Creation Director then merged it to Surface main `3b349b70567ef3758bf951a08f2aa5e65ae56a86`.
+- `axis-gradient` and `stripes` are integrated as `TECHNICALLY_RENDERED_UNBASELINED` observations with explicit control-relative effect evidence; neither has reviewed pixel-baseline or aesthetic authority.
+- PRs #13-#24 integrated the exact runtime/evidence lane plus the source-integrity boundary from numeric derivation through nested authoring, inert writes, authored presence, signed-zero handling, semantic discriminators and the outer request envelope.
+- PR #25 integrated exact request-envelope own-key accounting so unsupported caller-owned names/symbols cannot silently become omission.
+- PR #26 integrated own-key membership for the facing-direction registry so inherited host-language names cannot masquerade as declared directions.
+- PR #27 integrated provenance presence semantics so admitted falsey authored values remain exact rather than collapsing through truthiness.
+- PR #28 promoted the independently verified Object-prototype host-name family into permanent facing-registry producer regressions.
+- Creation Director round 16 converged PRs #27 and #28; Surface main entering this activation is `895c0330422e9639cac2308da38821ac44942ad9`.
 
-## Current candidate — request-envelope own-key identity
+## Current candidate — base-only authorship is actually base-only
 
-PR #24 made the request envelope trap-free before Surface reads known fields, but `snapshotRequest()` still selected only the six named v0.1 fields. Any other caller-authored own string key was ignored, and symbol-keyed request data was never examined. That silently reinterpreted authored presence as omission one layer outside the already strict intent grammar. The loss affected enumerable unknown fields, non-enumerable unknown fields and symbol-keyed data even though the provisional v0.1 envelope exposes an explicit top-level field set.
+`fixtures/request.base-control.json` explicitly requests the shared base material "without a named surface effect" and authors only `base_color`. The producer nevertheless applied its legacy normal-driven default paint to every request that had no raw/rule paint. That made the technical `base-control` receipt structurally different from the meaning its fixture and evidence lane claimed.
 
-Surface PR #25 therefore:
+This candidate keeps the repair deliberately bounded:
 
-- preserves fail-first regressions for an enumerable unknown request field, a hidden unknown request field and a symbol-keyed request field, plus an ordinary v0.1 control;
-- rejects symbol-keyed request data before portable transport can drop it;
-- inspects all own string names before selecting known v0.1 fields and deterministically HOLDs the first unsupported name;
-- leaves caller-owned unknown data/descriptors untouched;
-- keeps the request Proxy gate first, so own-key inspection does not execute caller-controlled Proxy traps;
-- changes no material vocabulary, MorphTile runtime primitive, compatibility claim, reviewed pixel authority or aesthetic judgement.
+- a request whose only authored visual treatment is `base_color` emits that ordinary MorphTile material color without inventing procedural `paint`;
+- an actually empty Surface intent still receives the existing bounded legacy fallback paint, preserving the established no-authorship default;
+- named pattern behavior is intentionally unchanged because the reviewed `checker` pixel baseline already binds that composition and changing it belongs to a separate visual-review decision;
+- the legacy default-paint expression is now one deterministic `createDefaultPaint()` primitive rather than duplicated reasoning;
+- the runtime pattern conformance control authors that default paint explicitly instead of depending on a base-color-only request to acquire it implicitly;
+- producer evidence now describes the base-only path as authored base color without an invented procedural treatment.
 
-Fail-first evidence is preserved at exact test-only head `ae94524e9b8a02b86f8f24bc7bdec38003518799`. Actions run `35555952139` failed at `npm test`; render/evidence and artifact upload were correctly skipped. The repaired code head `abe469a9c586906e901ac6f51a7a72a770030b21` passed Actions `35556009152`, including `npm test`, the real pinned `npm run evidence:render`, and evidence upload. Artifact `10620004492` has digest `sha256:9ec0aa308345ad34b1ffe4baaff8896700213b2e2a5ccfe7014baaf798fa86f1`.
+Fail-first evidence is preserved at exact test-only head `3e306da596bb7874d0623c34a56c3d7de3e9ddf5`. Actions `35566649009` failed at `npm test`; render evidence and artifact upload were skipped.
 
-This activation also repaired one independent continuity contradiction: `INTEGRATION.md` still named the older `ef2b3c...` runtime despite `machine.json`, README and this status already pinning exact MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`. The integration contract now names the manifest pin. Because documentation commits move the candidate head, exact final-head CI/render evidence must be replayed after these continuity updates before producer PASS is claimed for the final head.
+The first repair head `e5f5be1dde1b828e1c9582ef63e1461dfb328feb` still failed `npm test` in Actions `35566696552`. Inspection of the runtime conformance contract showed the pattern baseline used a base-color-only request while requiring the same procedural paint colors as patterned cases. The candidate therefore made that control authorship explicit and centralized the repeated fallback expression instead of weakening the new base-only invariant.
+
+Repaired code/test head `de56f633c234ce7056f3e0942402fec069608777` passed Actions `35566867299`: `npm test`, the real pinned `npm run evidence:render`, and evidence artifact upload all passed. Artifact `10623668699` has digest `sha256:bccf8164735095021ecff54d68ba783229636a3a668a7e5ee3e635226393d74f`.
+
+Because this status update moves the candidate head, producer PASS for the final PR head must be based on a fresh exact-head workflow replay after this commit.
 
 ## Reusable rules learned
+
+**A technical control must structurally mean what its evidence label says.** A fixture called base-only cannot secretly receive an unrelated normal-driven paint treatment merely because a generic fallback exists.
+
+**Defaults are absence semantics, not decoration rights.** Once the caller has authored a complete ordinary base material, a producer default must not add an orthogonal visual treatment unless that composition is an explicit named contract.
+
+**Repeated fallback semantics belong in one deterministic primitive.** Tests that need the same treatment must author it explicitly from the machine primitive instead of relying on an unrelated request shape to trigger it by accident.
+
+**Reviewed pixels are authority, not implementation convenience.** The existing checker composition remains unchanged in this candidate because changing a reviewed visual baseline requires a separate visual-review decision; a technical cleanup must not silently rewrite reviewed appearance.
 
 **An exact envelope grammar must account for every caller-owned own key before selecting the fields it understands.** Trap-free reads are incomplete if unknown own names or symbols can simply disappear. When the grammar has no extension field, unsupported own-key presence must HOLD rather than become omission.
 
@@ -88,24 +95,26 @@ This activation also repaired one independent continuity contradiction: `INTEGRA
 
 ## Placement decision
 
-The current candidate belongs in Surface Machine. It repairs how the Surface producer applies its own provisional request-envelope grammar before compiling material intent. MorphTile v0.4 already defines the universal ordinary material substrate: base color, optional `emissive`, `glow`, `checker|stripes|noise` + scale, and per-triangle paint with `x/y/z`, `nx/ny/nz` and `up`, plus deterministic rendering. No missing universal material representation/runtime primitive was demonstrated, so no MorphTile-core candidate is justified.
+The current candidate belongs in Surface Machine. It repairs producer-side default authorship and evidence-control semantics. MorphTile v0.4 already defines ordinary `material.data.color` with optional `paint`, so a base-color-only material needs no new universal representation/runtime primitive. No MorphTile-core candidate is justified.
 
 Surface remains deliberately pinned to exact tested MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`; current-core freshness alone is not a reason to manufacture compatibility churn.
 
 ## Evidence boundary
 
-- Integrated Surface baseline before PR #25: `3b349b70567ef3758bf951a08f2aa5e65ae56a86`.
-- Fail-first PR #25 head `ae94524e9b8a02b86f8f24bc7bdec38003518799`, Actions `35555952139`: `npm test` failed on the new request-own-key regressions; render/evidence and upload skipped.
-- Repaired code head `abe469a9c586906e901ac6f51a7a72a770030b21`, Actions `35556009152`: `npm test`, real pinned `npm run evidence:render`, and artifact upload PASS; artifact `10620004492`, digest `sha256:9ec0aa308345ad34b1ffe4baaff8896700213b2e2a5ccfe7014baaf798fa86f1`.
-- Producer CI and the real render-evidence path must pass on the final exact candidate head after continuity-document updates before `TECHNICALLY VALID` is claimed for that final head.
+- Integrated Surface baseline entering this activation: `895c0330422e9639cac2308da38821ac44942ad9`.
+- Fail-first head `3e306da596bb7874d0623c34a56c3d7de3e9ddf5`, Actions `35566649009`: `npm test` failed; render/evidence and upload skipped.
+- First repair head `e5f5be1dde1b828e1c9582ef63e1461dfb328feb`, Actions `35566696552`: `npm test` still failed; render/evidence and upload skipped.
+- Repaired code/test head `de56f633c234ce7056f3e0942402fec069608777`, Actions `35566867299`: `npm test`, real pinned `npm run evidence:render`, and artifact upload PASS; artifact `10623668699`, digest `sha256:bccf8164735095021ecff54d68ba783229636a3a668a7e5ee3e635226393d74f`.
+- Producer CI and the real render-evidence path must pass on the final exact candidate head after this status update before `TECHNICALLY VALID` is claimed for that final head.
 - Independent Verification remains separate from producer CI.
-- Existing reviewed render evidence and technical observation evidence may remain green without implying this request-boundary repair improved appearance.
+- Existing reviewed `facing-up` and `checker` pixel authority is unchanged by this candidate.
 - `VISUALLY GOOD` remains `NOT_ASSESSED`.
 
 ## HELD / open
 
-- Independent Verification and Creation Director integration of Surface PR #25.
+- Independent Verification and Creation Director integration of the current Surface candidate.
 - Compatibility beyond exact tested MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`.
+- Any change to the reviewed checker composition/default-paint relationship without a separate visual-review decision.
 - Any promotion of gradient, stripes or base-control pixels into reviewed-baseline authority.
 - `VISUALLY GOOD` / aesthetic acceptance.
 - No arbitrary-direction/vector-facing rule without a demonstrated request.
