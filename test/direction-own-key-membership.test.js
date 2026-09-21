@@ -1,13 +1,20 @@
+"use strict";
+
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fixture = require("../fixtures/request.facing-up.json");
 const { run } = require("../src");
+const { DIRECTIONS } = require("../src/surface-rules");
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-for (const direction of ["constructor", "toString", "__proto__"]) {
+const AMBIENT_OBJECT_NAMES = Object.getOwnPropertyNames(Object.prototype)
+  .filter((name) => !Object.prototype.hasOwnProperty.call(DIRECTIONS, name))
+  .sort();
+
+for (const direction of AMBIENT_OBJECT_NAMES) {
   test(`facing direction ${direction} cannot inherit a host-object property as a valid direction`, () => {
     const request = clone(fixture);
     request.request_id = `surface-direction-own-key-${direction}`;
