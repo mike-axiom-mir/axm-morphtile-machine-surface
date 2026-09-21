@@ -6,6 +6,7 @@ const manifest = require("../machine.json");
 const facingFixture = require("../fixtures/request.facing-up.json");
 const rawFixture = require("../fixtures/request.up-facing.json");
 const { run } = require("../src");
+const { createDefaultPaint } = require("../src/surface-defaults");
 
 const runtimePath = process.env.MORPHTILE_CORE_PATH;
 const runtimeCommit = process.env.MORPHTILE_COMMIT;
@@ -35,9 +36,10 @@ function requestFor(direction) {
   };
 }
 
-function materialRequest(id, pattern) {
+function materialRequest(id, pattern, paint) {
   const intent = { base_color: [0.2, 0.25, 0.3] };
   if (pattern) intent.pattern = pattern;
+  if (paint) intent.paint = paint;
   return {
     envelope_version: "0.1",
     request_id: id,
@@ -198,7 +200,14 @@ integrationTest("pinned MorphTile runtime executes the caller-paint fixture inst
 integrationTest("pinned MorphTile runtime executes checker and stripes as bounded orthogonal material patterns", () => {
   assert.equal(runtimeCommit, manifest.tested_against.commit, "CI runtime must match machine.json pin");
   const MorphTile = require(path.resolve(runtimePath));
-  const baseline = compileCandidate(MorphTile, run(materialRequest("surface-pattern-baseline")), "surface pattern baseline");
+  // Pattern orthogonality is tested against the same explicitly authored
+  // procedural paint treatment. A base-color-only request is now genuinely
+  // base-only and must not be used as an implicit source of default paint.
+  const baseline = compileCandidate(
+    MorphTile,
+    run(materialRequest("surface-pattern-baseline", null, createDefaultPaint())),
+    "surface pattern baseline"
+  );
 
   const checker = compileCandidate(
     MorphTile,
