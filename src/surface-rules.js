@@ -54,9 +54,18 @@ function rgb(value, field) {
 }
 
 function facingExpression(direction) {
+  // Do not let host-language property-key coercion decide the error identity for
+  // structured authored values. Surface owns this named discriminator grammar,
+  // so establish its string boundary before using it as an object key.
+  if (typeof direction !== "string") {
+    throw new SurfaceRuleError(
+      "HOLD_SURFACE_RULE_DIRECTION_UNKNOWN",
+      "surface_rule.direction must be one of: " + Object.keys(DIRECTIONS).join(", ")
+    );
+  }
   const spec = DIRECTIONS[direction];
   if (!spec) {
-    throw new SurfaceRuleError("HOLD_SURFACE_RULE_DIRECTION_UNKNOWN", "unknown facing direction: " + String(direction));
+    throw new SurfaceRuleError("HOLD_SURFACE_RULE_DIRECTION_UNKNOWN", "unknown facing direction: " + direction);
   }
   const normal = ["var", spec.variable];
   return spec.sign === 1 ? normal : ["*", -1, normal];
@@ -158,9 +167,16 @@ function compileSurfaceRule(rule) {
   if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
     throw new SurfaceRuleError("HOLD_SURFACE_RULE_INVALID", "surface_rule must be an object");
   }
+  // The rule kind is a Surface-owned discriminator. Establish its primitive
+  // grammar before comparisons or error formatting so a structured authored
+  // value cannot fall through to JavaScript String() coercion and replace the
+  // stable Surface HOLD with a native TypeError.
+  if (typeof rule.kind !== "string") {
+    throw new SurfaceRuleError("HOLD_SURFACE_RULE_KIND_UNKNOWN", "surface_rule.kind must be a string");
+  }
   if (rule.kind === "facing") return compileFacing(rule);
   if (rule.kind === "axis_gradient") return compileAxisGradient(rule);
-  throw new SurfaceRuleError("HOLD_SURFACE_RULE_KIND_UNKNOWN", "unknown surface rule kind: " + String(rule.kind));
+  throw new SurfaceRuleError("HOLD_SURFACE_RULE_KIND_UNKNOWN", "unknown surface rule kind: " + rule.kind);
 }
 
 module.exports = { DIRECTIONS, GRADIENT_AXES, SurfaceRuleError, compileSurfaceRule };

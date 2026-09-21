@@ -1,7 +1,7 @@
 # Status
 
 - Machine version: 0.5.1
-- State: CREATION SEMANTICS + REVIEWED/TECHNICAL RENDER EVIDENCE + SOURCE-INTEGRITY REPAIRS THROUGH PR #20 INTEGRATED; COMPILED SIGNED-ZERO SEMANTICS CANDIDATE OPEN
+- State: CREATION SEMANTICS + REVIEWED/TECHNICAL RENDER EVIDENCE + SOURCE-INTEGRITY REPAIRS THROUGH PR #21 INTEGRATED; RULE-DISCRIMINATOR COERCION BOUNDARY CANDIDATE OPEN
 - Local test command: `npm test`
 - Render evidence command: `npm run evidence:render`
 - Exact tested MorphTile runtime target: v0.4 at `26b89a77f6a90715a6742dc4d084008ba63731b6`
@@ -28,28 +28,29 @@
 - PR #17 extended inert own-key preservation across remaining intent and raw-paint snapshot boundaries.
 - PR #18 promoted independently verified inherited-looking own-key cases into permanent producer regressions.
 - PR #19 integrated authored-presence semantics: explicit `undefined` and hidden compiled semantic data can no longer collapse into omission/defaulting, while the established hidden `toJSON` metadata exception remains narrow and inert.
-- PR #20 integrated signed-negative-zero rejection for raw pass-through paint before JSON transport can erase its sign identity. Independent Verification round 10 passed the exact candidate before Director integration; Surface main after merge is `4349ba0d926aee1d36dde86fc7f69d04a58bf924`.
+- PR #20 integrated signed-negative-zero rejection for raw pass-through paint before JSON transport can erase its sign identity.
+- PR #21 integrated explicit signed-zero canonicalization for machine-owned compiled `base_color`, facing and `axis_gradient` numeric meaning. Independent Verification round 11 passed exact candidate `3e43c003a0dc54f7ae877767fd2c3dff9daaa39d`; Creation Director then merged it to Surface main `ccddcb8030125a2a93acd33365bab700b62b37d7`.
 
-## Current candidate — explicit compiled signed-zero semantics
+## Current candidate — coercion-free rule discriminators
 
-Round-10 verification established a general portability rule: pass-through authored values that transport would collapse must be preserved or rejected unless normalization is explicitly part of the grammar. Raw paint now enforces that rule for JavaScript `-0`.
+The source-integrity layers now ensure compiled authoring reaches semantic compilers as trap-free plain data. A remaining semantic edge still allowed host-language coercion to decide failure identity: structured plain values in `surface_rule.kind` could reach `String(rule.kind)` in the unknown-kind path, while structured `direction` values could be used as object property keys before their named-string grammar was established.
 
-Inspection of the complementary machine-owned path found that compiled Surface authoring could still carry `-0` through semantic normalization and only lose the sign later because the result envelope serializes through JSON. That made transport the hidden author of normalization even though the named Surface numeric domains do not assign distinct material meaning to signed zero.
+A portable structured value whose own `toString` and `valueOf` properties are non-callable therefore produced a native JavaScript `TypeError`, which `run()` summarized only as generic `HOLD_SURFACE_RULE_INVALID`. That did not execute caller code, but it weakened deterministic Surface semantics: a Surface-owned invalid discriminator should resolve to the same named Surface HOLD regardless of JavaScript primitive-coercion behavior.
 
-Surface PR #21 therefore:
+Surface PR #23 therefore:
 
-- introduces one deterministic `canonicalizeCompiledNumber()` primitive for machine-owned scalar surface semantics;
-- explicitly canonicalizes signed zero in `base_color` RGB channels before result-envelope transport;
-- explicitly canonicalizes named `facing` threshold and rule colors before expression construction;
-- explicitly canonicalizes `axis_gradient` endpoints and rule colors before expression construction;
-- leaves raw caller-authored paint on the stricter pass-through boundary, where `-0` remains `HOLD_SURFACE_PAINT_NONPORTABLE_VALUE`;
-- leaves positive-only pattern `scale: -0` invalid rather than reinterpreting it as a default;
-- tests the pre-envelope normalized/compiler values so JSON transport cannot make the regression pass by accident;
-- changes no material vocabulary, runtime primitive, reviewed pixel authority or aesthetic judgement.
+- adds fail-first regressions for structured `surface_rule.kind` and facing `direction` values that previously collapsed into native coercion failure;
+- validates `surface_rule.kind` as a string before comparison or error formatting;
+- validates facing `direction` as a string before using it as an object key;
+- preserves the existing precise `HOLD_SURFACE_RULE_KIND_UNKNOWN` and `HOLD_SURFACE_RULE_DIRECTION_UNKNOWN` identities;
+- preserves caller-owned input unchanged and emits no candidate on rejection;
+- changes no surface vocabulary, MorphTile runtime primitive, compatibility pin, reviewed pixel authority or aesthetic judgement.
 
-Fail-first evidence is preserved in PR #21. Exact repaired-head producer and PR-triggered workflow receipts are recorded on the PR and in the MorphTile room; current branch CI remains the authority for any later mutation of the candidate.
+Fail-first evidence is preserved at exact test-only head `ea029b4f37b61316e46d032cd8ccb0d0e4d7e0c0`, whose PR workflow failed as expected before the repair. Exact repaired-head producer and render evidence remain authoritative after every later candidate mutation.
 
 ## Reusable rules learned
+
+**Machine-owned semantic discriminators must be validated before host-language coercion.** Source-safe snapshots stop caller execution, but deterministic grammar also requires that structured authored values cannot fall through to `String()`, property-key conversion or another ambient coercion path that replaces a precise machine HOLD with a native runtime error.
 
 **Transport must never be the hidden author of normalization.** Pass-through grammars preserve authored identity or HOLD. Machine-owned compiled grammars may deliberately collapse equivalent representations, but normalization must happen explicitly at the semantic boundary before serialization and be regression-tested there.
 
@@ -79,14 +80,14 @@ Fail-first evidence is preserved in PR #21. Exact repaired-head producer and PR-
 
 ## Placement decision
 
-The current candidate belongs in Surface Machine. MorphTile v0.4 already defines the universal ordinary material substrate: base color, optional `emissive`, `glow`, `checker|stripes|noise` + scale, and per-triangle paint with `x/y/z`, `nx/ny/nz` and `up`, plus deterministic rendering. The candidate changes how Surface-owned compiled numeric meaning is normalized before transport; it does not expose a missing runtime representation primitive.
+The current candidate belongs in Surface Machine. MorphTile v0.4 already defines the universal ordinary material substrate: base color, optional `emissive`, `glow`, `checker|stripes|noise` + scale, and per-triangle paint with `x/y/z`, `nx/ny/nz` and `up`, plus deterministic rendering. The candidate changes how Surface-owned named rule discriminators fail closed before semantic lookup/error formatting; it does not expose a missing runtime representation primitive.
 
 Surface remains deliberately pinned to exact tested MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`; current-core freshness alone is not a reason to manufacture compatibility churn.
 
 ## Evidence boundary
 
-- Integrated Surface baseline before PR #21: `4349ba0d926aee1d36dde86fc7f69d04a58bf924`.
-- Fail-first PR #21 regression proves compiled signed zero remained present before envelope serialization on the pre-repair candidate.
+- Integrated Surface baseline before PR #23: `ccddcb8030125a2a93acd33365bab700b62b37d7`.
+- Fail-first PR #23 head `ea029b4f37b61316e46d032cd8ccb0d0e4d7e0c0` proves structured rule discriminators could replace precise Surface rejection identity with host coercion failure.
 - Producer CI and the real render-evidence path must pass on every exact candidate head before `TECHNICALLY VALID` is claimed for that head.
 - Independent Verification remains separate from producer CI.
 - Existing reviewed render evidence and technical observation evidence may remain green without implying this semantic repair improved appearance.
@@ -94,7 +95,7 @@ Surface remains deliberately pinned to exact tested MorphTile `26b89a77f6a90715a
 
 ## HELD / open
 
-- Independent Verification and Creation Director integration of Surface PR #21.
+- Independent Verification and Creation Director integration of Surface PR #23.
 - Compatibility beyond exact tested MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`.
 - Any promotion of gradient, stripes or base-control pixels into reviewed-baseline authority.
 - `VISUALLY GOOD` / aesthetic acceptance.
