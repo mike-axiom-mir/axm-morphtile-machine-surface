@@ -1,7 +1,7 @@
 # Status
 
 - Machine version: 0.5.1
-- State: CREATION SEMANTICS + REVIEWED/TECHNICAL RENDER EVIDENCE + SOURCE-INTEGRITY REPAIRS THROUGH PR #21 INTEGRATED; RULE-DISCRIMINATOR COERCION BOUNDARY CANDIDATE OPEN
+- State: CREATION SEMANTICS + REVIEWED/TECHNICAL RENDER EVIDENCE + SOURCE-INTEGRITY REPAIRS THROUGH PR #23 INTEGRATED; REQUEST-ENVELOPE SOURCE-INTEGRITY CANDIDATE OPEN
 - Local test command: `npm test`
 - Render evidence command: `npm run evidence:render`
 - Exact tested MorphTile runtime target: v0.4 at `26b89a77f6a90715a6742dc4d084008ba63731b6`
@@ -30,25 +30,28 @@
 - PR #19 integrated authored-presence semantics: explicit `undefined` and hidden compiled semantic data can no longer collapse into omission/defaulting, while the established hidden `toJSON` metadata exception remains narrow and inert.
 - PR #20 integrated signed-negative-zero rejection for raw pass-through paint before JSON transport can erase its sign identity.
 - PR #21 integrated explicit signed-zero canonicalization for machine-owned compiled `base_color`, facing and `axis_gradient` numeric meaning. Independent Verification round 11 passed exact candidate `3e43c003a0dc54f7ae877767fd2c3dff9daaa39d`; Creation Director then merged it to Surface main `ccddcb8030125a2a93acd33365bab700b62b37d7`.
+- PR #23 integrated coercion-free Surface rule discriminators. Independent Verification round 12 passed exact candidate `3dfe1ce0fdadbf83fa330a088429ed3806c14583`; Creation Director then merged it to Surface main `5e29c258a92f522374f6819e2b470582865f8557`.
 
-## Current candidate — coercion-free rule discriminators
+## Current candidate — request-envelope source integrity
 
-The source-integrity layers now ensure compiled authoring reaches semantic compilers as trap-free plain data. A remaining semantic edge still allowed host-language coercion to decide failure identity: structured plain values in `surface_rule.kind` could reach `String(rule.kind)` in the unknown-kind path, while structured `direction` values could be used as object property keys before their named-string grammar was established.
+The inner Surface intent boundary is now descriptor-safe, Proxy-safe and recursive, but one ownership boundary remained outside it. `run()` still read `request.intent` directly after a shallow `assertRequest()`, dependency lookup called `.includes()` directly on caller-owned `request.available_capabilities`, and `result()` JSON-cloned caller-owned provenance. Those reads could execute request-level accessors or Proxy traps before Surface had decided whether the envelope was admissible. A string supplied as `available_capabilities` could also inherit JavaScript `String.prototype.includes` semantics and masquerade as a capability list.
 
-A portable structured value whose own `toString` and `valueOf` properties are non-callable therefore produced a native JavaScript `TypeError`, which `run()` summarized only as generic `HOLD_SURFACE_RULE_INVALID`. That did not execute caller code, but it weakened deterministic Surface semantics: a Surface-owned invalid discriminator should resolve to the same named Surface HOLD regardless of JavaScript primitive-coercion behavior.
+Surface PR #24 therefore:
 
-Surface PR #23 therefore:
-
-- adds fail-first regressions for structured `surface_rule.kind` and facing `direction` values that previously collapsed into native coercion failure;
-- validates `surface_rule.kind` as a string before comparison or error formatting;
-- validates facing `direction` as a string before using it as an object key;
-- preserves the existing precise `HOLD_SURFACE_RULE_KIND_UNKNOWN` and `HOLD_SURFACE_RULE_DIRECTION_UNKNOWN` identities;
-- preserves caller-owned input unchanged and emits no candidate on rejection;
+- preserves fail-first regressions for a request-level `intent` accessor, a root request Proxy, an `available_capabilities` Proxy and provenance accessors;
+- establishes a trap-free request-envelope snapshot before Surface reads intent, capability availability or provenance;
+- requires `available_capabilities` to be a dense plain array of string capability ids before dependency lookup, while retaining an ordinary-array control;
+- snapshots provenance as portable plain data before result transport rather than letting JSON serialization execute caller-owned behavior;
+- keeps the existing deeper intent/paint/rule/pattern source boundaries intact instead of replacing them;
 - changes no surface vocabulary, MorphTile runtime primitive, compatibility pin, reviewed pixel authority or aesthetic judgement.
 
-Fail-first evidence is preserved at exact test-only head `ea029b4f37b61316e46d032cd8ccb0d0e4d7e0c0`, whose PR workflow failed as expected before the repair. Exact repaired-head producer and render evidence remain authoritative after every later candidate mutation.
+Fail-first evidence is preserved at exact test-only head `f0c59f6b56b93010c1f5a102eb99fa409895e617`. Actions run `35552717637` failed `npm test` with the four new request-boundary regressions failing before the repair; render/evidence stages were correctly skipped. Exact repaired-head producer and render evidence must remain authoritative after every later candidate mutation.
 
 ## Reusable rules learned
+
+**Source integrity must begin before the first caller-owned read, including the outer request envelope.** Protecting `intent` recursively is incomplete if `request.intent`, capability availability or provenance can execute caller code one ownership boundary earlier. Metadata used for machine decisions or later transport must first become inert plain data under its own grammar.
+
+**Container type is semantic meaning, not merely an implementation detail.** A capability list is a list of capability ids; accepting a string because it also has `.includes()` silently delegates grammar to host-language method coincidence.
 
 **Machine-owned semantic discriminators must be validated before host-language coercion.** Source-safe snapshots stop caller execution, but deterministic grammar also requires that structured authored values cannot fall through to `String()`, property-key conversion or another ambient coercion path that replaces a precise machine HOLD with a native runtime error.
 
@@ -80,22 +83,22 @@ Fail-first evidence is preserved at exact test-only head `ea029b4f37b61316e46d03
 
 ## Placement decision
 
-The current candidate belongs in Surface Machine. MorphTile v0.4 already defines the universal ordinary material substrate: base color, optional `emissive`, `glow`, `checker|stripes|noise` + scale, and per-triangle paint with `x/y/z`, `nx/ny/nz` and `up`, plus deterministic rendering. The candidate changes how Surface-owned named rule discriminators fail closed before semantic lookup/error formatting; it does not expose a missing runtime representation primitive.
+The current candidate belongs in Surface Machine. It repairs how the Surface producer establishes its own caller/request boundary before compiling material intent. MorphTile v0.4 already defines the universal ordinary material substrate: base color, optional `emissive`, `glow`, `checker|stripes|noise` + scale, and per-triangle paint with `x/y/z`, `nx/ny/nz` and `up`, plus deterministic rendering. No missing universal material representation/runtime primitive was demonstrated, so no MorphTile-core candidate is justified.
 
 Surface remains deliberately pinned to exact tested MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`; current-core freshness alone is not a reason to manufacture compatibility churn.
 
 ## Evidence boundary
 
-- Integrated Surface baseline before PR #23: `ccddcb8030125a2a93acd33365bab700b62b37d7`.
-- Fail-first PR #23 head `ea029b4f37b61316e46d032cd8ccb0d0e4d7e0c0` proves structured rule discriminators could replace precise Surface rejection identity with host coercion failure.
-- Producer CI and the real render-evidence path must pass on every exact candidate head before `TECHNICALLY VALID` is claimed for that head.
+- Integrated Surface baseline before PR #24: `5e29c258a92f522374f6819e2b470582865f8557`.
+- Fail-first PR #24 head `f0c59f6b56b93010c1f5a102eb99fa409895e617`, Actions `35552717637`: 260 PASS / 4 FAIL, with exactly the four new request-envelope regressions failing; render/evidence stages skipped.
+- Producer CI and the real render-evidence path must pass on every exact repaired candidate head before `TECHNICALLY VALID` is claimed for that head.
 - Independent Verification remains separate from producer CI.
-- Existing reviewed render evidence and technical observation evidence may remain green without implying this semantic repair improved appearance.
+- Existing reviewed render evidence and technical observation evidence may remain green without implying this request-boundary repair improved appearance.
 - `VISUALLY GOOD` remains `NOT_ASSESSED`.
 
 ## HELD / open
 
-- Independent Verification and Creation Director integration of Surface PR #23.
+- Independent Verification and Creation Director integration of Surface PR #24.
 - Compatibility beyond exact tested MorphTile `26b89a77f6a90715a6742dc4d084008ba63731b6`.
 - Any promotion of gradient, stripes or base-control pixels into reviewed-baseline authority.
 - `VISUALLY GOOD` / aesthetic acceptance.
