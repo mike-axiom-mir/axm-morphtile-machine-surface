@@ -64,6 +64,26 @@ test("available capability lists are inertly snapshotted before dependency looku
   assert.equal(calls.count, 0, "capability-list Proxy traps must not execute during dependency lookup");
 });
 
+test("available capability semantics require a real list instead of String.includes lookalikes", () => {
+  const request = clone(fixture);
+  request.request_id = "surface-request-capability-string";
+  request.intent = { external_dependency: "bridge:cloth" };
+  request.available_capabilities = "prefix-bridge:cloth-suffix";
+
+  assert.throws(() => run(request), /request\.available_capabilities must be an array when supplied/);
+});
+
+test("ordinary capability arrays remain usable after inert snapshotting", () => {
+  const request = clone(fixture);
+  request.request_id = "surface-request-capability-control";
+  request.intent = { external_dependency: "bridge:cloth" };
+  request.available_capabilities = ["bridge:cloth"];
+
+  const out = run(request);
+  assert.equal(out.status, "CANDIDATE");
+  assert.equal(out.holds.length, 0);
+});
+
 test("provenance accessors cannot execute during result transport", () => {
   const request = clone(fixture);
   request.request_id = "surface-request-provenance-accessor";
